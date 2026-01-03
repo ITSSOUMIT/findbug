@@ -1,0 +1,168 @@
+<h1>Performance</h1>
+
+<%# Time filter %>
+<div class="filters">
+  <%= form_tag findbug.performance_index_path, method: :get do %>
+    <div class="filter-group">
+      <label>Time Range</label>
+      <%= select_tag :since, options_for_select([
+        ["Last Hour", "1h"],
+        ["Last 24 Hours", "24h"],
+        ["Last 7 Days", "7d"],
+        ["Last 30 Days", "30d"]
+      ], params[:since] || "24h"), onchange: "this.form.submit()" %>
+    </div>
+  <% end %>
+</div>
+
+<%# Stats overview %>
+<div class="stats-grid">
+  <div class="stat-card">
+    <div class="stat-label">Total Requests</div>
+    <div class="stat-value"><%= @stats[:total_requests] %></div>
+  </div>
+
+  <div class="stat-card">
+    <div class="stat-label">Avg Duration</div>
+    <div class="stat-value <%= @stats[:avg_duration] > 500 ? 'warning' : '' %>">
+      <%= @stats[:avg_duration] %>ms
+    </div>
+  </div>
+
+  <div class="stat-card">
+    <div class="stat-label">Max Duration</div>
+    <div class="stat-value"><%= @stats[:max_duration] %>ms</div>
+  </div>
+
+  <div class="stat-card">
+    <div class="stat-label">N+1 Rate</div>
+    <div class="stat-value <%= @stats[:n_plus_one_percentage] > 10 ? 'warning' : 'success' %>">
+      <%= @stats[:n_plus_one_percentage] %>%
+    </div>
+  </div>
+</div>
+
+<div class="grid-2">
+  <%# Slowest Endpoints %>
+  <div class="card">
+    <div class="card-header">
+      <h2 class="card-title">Slowest Endpoints</h2>
+    </div>
+
+    <% if @slowest.any? %>
+      <table class="table">
+        <thead>
+          <tr>
+            <th>Endpoint</th>
+            <th>Avg</th>
+            <th>Max</th>
+            <th>Count</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% @slowest.each do |endpoint| %>
+            <tr>
+              <td>
+                <a href="<%= findbug.performance_path(endpoint[:transaction_name]) %>">
+                  <%= truncate(endpoint[:transaction_name], length: 35) %>
+                </a>
+              </td>
+              <td>
+                <span class="badge badge-<%= endpoint[:avg_duration_ms] > 500 ? 'warning' : (endpoint[:avg_duration_ms] > 200 ? 'info' : 'success') %>">
+                  <%= endpoint[:avg_duration_ms].round %>ms
+                </span>
+              </td>
+              <td class="text-muted">
+                <%= endpoint[:max_duration_ms].round %>ms
+              </td>
+              <td><%= endpoint[:count] %></td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    <% else %>
+      <div class="empty-state">
+        <div class="empty-state-icon">📊</div>
+        <p>No performance data yet</p>
+      </div>
+    <% end %>
+  </div>
+
+  <%# N+1 Hotspots %>
+  <div class="card">
+    <div class="card-header">
+      <h2 class="card-title">N+1 Hotspots</h2>
+    </div>
+
+    <% if @n_plus_one.any? %>
+      <table class="table">
+        <thead>
+          <tr>
+            <th>Endpoint</th>
+            <th>N+1 Count</th>
+            <th>Avg Queries</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% @n_plus_one.each do |endpoint| %>
+            <tr>
+              <td>
+                <a href="<%= findbug.performance_path(endpoint[:transaction_name]) %>">
+                  <%= truncate(endpoint[:transaction_name], length: 35) %>
+                </a>
+              </td>
+              <td>
+                <span class="badge badge-warning"><%= endpoint[:n_plus_one_count] %></span>
+              </td>
+              <td><%= endpoint[:avg_queries] %></td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    <% else %>
+      <div class="empty-state">
+        <div class="empty-state-icon">✓</div>
+        <p>No N+1 issues detected</p>
+      </div>
+    <% end %>
+  </div>
+</div>
+
+<%# Throughput chart %>
+<div class="card">
+  <div class="card-header">
+    <h2 class="card-title">Throughput Over Time</h2>
+    <span class="text-muted text-xs">Requests per interval</span>
+  </div>
+  <% if @throughput.any? %>
+    <div class="card-content">
+      <div class="chart-container">
+        <% max_count = [@throughput.map { |t| t[:count] }.max.to_f, 1].max %>
+        <% @throughput.each do |point| %>
+          <% height = (point[:count] / max_count * 100).round %>
+          <% height = [height, 3].max if point[:count] > 0 %>
+          <div
+            class="chart-bar"
+            style="height: <%= height %>%;"
+            data-tooltip="<%= point[:time].strftime('%H:%M') %> - <%= point[:count] %> req, <%= point[:avg_duration_ms]&.round || 0 %>ms"
+          ></div>
+        <% end %>
+      </div>
+      <div class="chart-labels text-muted text-xs">
+        <span><%= @throughput.first[:time].strftime("%H:%M") if @throughput.first %></span>
+        <span><%= @throughput.last[:time].strftime("%H:%M") if @throughput.last %></span>
+      </div>
+    </div>
+  <% else %>
+    <div class="empty-state">
+      <div class="empty-state-icon">
+        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="12" y1="20" x2="12" y2="10"/>
+          <line x1="18" y1="20" x2="18" y2="4"/>
+          <line x1="6" y1="20" x2="6" y2="16"/>
+        </svg>
+      </div>
+      <p>Not enough data to display chart</p>
+    </div>
+  <% end %>
+</div>

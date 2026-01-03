@@ -1,0 +1,56 @@
+
+===============================================================================
+  Findbug has been installed successfully!
+===============================================================================
+
+Next steps:
+
+1. Run the migrations:
+
+     rails db:migrate
+
+2. Set up Redis (if not already running):
+
+     # macOS with Homebrew
+     brew install redis && brew services start redis
+
+     # Docker
+     docker run -d -p 6379:6379 redis
+
+3. Configure dashboard authentication (required):
+
+     # Add to your environment variables or .env file:
+     FINDBUG_USERNAME=admin
+     FINDBUG_PASSWORD=your-secure-password
+
+4. Set up the background jobs (required for persistence):
+
+     # With Sidekiq, add to config/sidekiq.yml or use sidekiq-scheduler:
+     findbug_persist:
+       cron: "*/30 * * * * *"    # Every 30 seconds
+       class: Findbug::Jobs::PersistJob
+
+     findbug_cleanup:
+       cron: "0 3 * * *"         # Daily at 3 AM
+       class: Findbug::Jobs::CleanupJob
+
+     # Or manually trigger in console:
+     Findbug::Jobs::PersistJob.perform_now
+     Findbug::Jobs::CleanupJob.perform_now
+
+5. Access the dashboard:
+
+     http://localhost:3000/findbug
+
+6. (Optional) Configure alerts in config/initializers/findbug.rb:
+
+     config.alerts do |alerts|
+       alerts.slack(
+         enabled: true,
+         webhook_url: ENV["SLACK_WEBHOOK_URL"]
+       )
+     end
+
+For more information, see: https://github.com/soumitdas/findbug
+
+===============================================================================

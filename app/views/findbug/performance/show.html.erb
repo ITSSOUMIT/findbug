@@ -1,0 +1,203 @@
+<div style="margin-bottom: 1.5rem;">
+  <h1 style="margin-bottom: 0.5rem;"><%= @transaction_name %></h1>
+  <p class="text-muted text-sm">
+    <%= link_to "← Back to Performance", findbug.performance_index_path %>
+  </p>
+</div>
+
+<% if @stats %>
+  <%# Stats overview %>
+  <div class="stats-grid" style="grid-template-columns: repeat(6, 1fr);">
+    <div class="stat-card">
+      <div class="stat-label">Requests</div>
+      <div class="stat-value"><%= @stats[:count] %></div>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-label">Average</div>
+      <div class="stat-value"><%= @stats[:avg_duration_ms].round %>ms</div>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-label">P95</div>
+      <div class="stat-value"><%= @stats[:p95_duration_ms].round %>ms</div>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-label">P99</div>
+      <div class="stat-value"><%= @stats[:p99_duration_ms].round %>ms</div>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-label">Avg Queries</div>
+      <div class="stat-value"><%= @stats[:avg_query_count] %></div>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-label">N+1 Issues</div>
+      <div class="stat-value <%= @stats[:n_plus_one_count] > 0 ? 'warning' : 'success' %>">
+        <%= @stats[:n_plus_one_count] %>
+      </div>
+    </div>
+  </div>
+
+  <div class="grid-2">
+    <%# Slowest Requests %>
+    <div class="card">
+      <div class="card-header">
+        <h2 class="card-title">Slowest Requests</h2>
+      </div>
+
+      <% if @slowest_requests.any? %>
+        <table class="table">
+          <thead>
+            <tr>
+              <th>Duration</th>
+              <th>Queries</th>
+              <th>When</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% @slowest_requests.each do |req| %>
+              <tr>
+                <td>
+                  <span class="badge badge-<%= req.duration_ms > 1000 ? 'error' : 'warning' %>">
+                    <%= req.duration_ms.round %>ms
+                  </span>
+                </td>
+                <td>
+                  <%= req.query_count %> queries
+                  <% if req.has_n_plus_one %>
+                    <span class="badge badge-warning" style="margin-left: 0.25rem;">N+1</span>
+                  <% end %>
+                </td>
+                <td class="text-muted text-sm">
+                  <%= time_ago_in_words(req.captured_at) %> ago
+                </td>
+              </tr>
+            <% end %>
+          </tbody>
+        </table>
+      <% else %>
+        <div class="empty-state">
+          <p>No slow requests found</p>
+        </div>
+      <% end %>
+    </div>
+
+    <%# N+1 Issues %>
+    <div class="card">
+      <div class="card-header">
+        <h2 class="card-title">N+1 Issues</h2>
+      </div>
+
+      <% if @n_plus_one_requests.any? %>
+        <div class="card-content">
+          <% @n_plus_one_requests.each_with_index do |req, idx| %>
+            <div>
+              <div style="display: flex; justify-content: space-between; align-items: center;">
+                <span class="badge badge-warning"><%= req.query_count %> queries</span>
+                <span class="text-muted text-sm"><%= req.duration_ms.round %>ms</span>
+              </div>
+              <% if req.n_plus_one_queries.present? %>
+                <% req.n_plus_one_queries.first(2).each do |nq| %>
+                  <div style="margin-top: 0.5rem;">
+                    <div class="text-muted text-xs">
+                      Repeated <%= nq['count'] || nq[:count] %> times
+                    </div>
+                    <div class="code-block" style="margin-top: 0.25rem;">
+                      <%= truncate((nq['example'] || nq[:example]).to_s, length: 200) %>
+                    </div>
+                  </div>
+                <% end %>
+              <% end %>
+            </div>
+            <% unless idx == @n_plus_one_requests.length - 1 %><div class="separator"></div><% end %>
+          <% end %>
+        </div>
+      <% else %>
+        <div class="empty-state">
+          <div class="empty-state-icon">✓</div>
+          <p>No N+1 issues found</p>
+        </div>
+      <% end %>
+    </div>
+  </div>
+
+  <%# Duration breakdown %>
+  <div class="card">
+    <div class="card-header">
+      <h2 class="card-title">Duration Distribution</h2>
+    </div>
+    <div class="card-content">
+      <div style="display: grid; gap: 0.75rem;">
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+          <span class="text-muted text-sm">Min</span>
+          <div style="flex: 1; margin: 0 1rem;">
+            <div class="progress">
+              <div class="progress-bar info" style="width: <%= (@stats[:min_duration_ms] / [@stats[:max_duration_ms], 1].max * 100).round %>%;"></div>
+            </div>
+          </div>
+          <span class="text-sm" style="min-width: 60px; text-align: right;"><%= @stats[:min_duration_ms].round %>ms</span>
+        </div>
+
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+          <span class="text-muted text-sm">P50</span>
+          <div style="flex: 1; margin: 0 1rem;">
+            <div class="progress">
+              <div class="progress-bar info" style="width: <%= (@stats[:p50_duration_ms] / [@stats[:max_duration_ms], 1].max * 100).round %>%;"></div>
+            </div>
+          </div>
+          <span class="text-sm" style="min-width: 60px; text-align: right;"><%= @stats[:p50_duration_ms].round %>ms</span>
+        </div>
+
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+          <span class="text-muted text-sm">Avg</span>
+          <div style="flex: 1; margin: 0 1rem;">
+            <div class="progress">
+              <div class="progress-bar info" style="width: <%= (@stats[:avg_duration_ms] / [@stats[:max_duration_ms], 1].max * 100).round %>%;"></div>
+            </div>
+          </div>
+          <span class="text-sm" style="min-width: 60px; text-align: right;"><%= @stats[:avg_duration_ms].round %>ms</span>
+        </div>
+
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+          <span class="text-muted text-sm">P95</span>
+          <div style="flex: 1; margin: 0 1rem;">
+            <div class="progress">
+              <div class="progress-bar warning" style="width: <%= (@stats[:p95_duration_ms] / [@stats[:max_duration_ms], 1].max * 100).round %>%;"></div>
+            </div>
+          </div>
+          <span class="text-sm" style="min-width: 60px; text-align: right;"><%= @stats[:p95_duration_ms].round %>ms</span>
+        </div>
+
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+          <span class="text-muted text-sm">P99</span>
+          <div style="flex: 1; margin: 0 1rem;">
+            <div class="progress">
+              <div class="progress-bar warning" style="width: <%= (@stats[:p99_duration_ms] / [@stats[:max_duration_ms], 1].max * 100).round %>%;"></div>
+            </div>
+          </div>
+          <span class="text-sm" style="min-width: 60px; text-align: right;"><%= @stats[:p99_duration_ms].round %>ms</span>
+        </div>
+
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+          <span class="text-muted text-sm">Max</span>
+          <div style="flex: 1; margin: 0 1rem;">
+            <div class="progress">
+              <div class="progress-bar error" style="width: 100%;"></div>
+            </div>
+          </div>
+          <span class="text-sm" style="min-width: 60px; text-align: right;"><%= @stats[:max_duration_ms].round %>ms</span>
+        </div>
+      </div>
+    </div>
+  </div>
+<% else %>
+  <div class="card">
+    <div class="empty-state">
+      <div class="empty-state-icon">📊</div>
+      <p>No data found for this transaction.</p>
+    </div>
+  </div>
+<% end %>

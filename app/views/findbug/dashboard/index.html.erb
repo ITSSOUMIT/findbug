@@ -1,0 +1,199 @@
+<h1>Dashboard</h1>
+<p class="page-description">Monitor errors and performance across your application.</p>
+
+<%# Redis connection warning %>
+<% if @stats[:buffer][:circuit_breaker_state] != :closed || @stats[:buffer][:error].present? %>
+  <div class="flash flash-error" style="margin-bottom: 1.5rem;">
+    <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path d="M8 16A8 8 0 1 0 8 0a8 8 0 0 0 0 16zM5.22 5.22a.75.75 0 0 1 1.06 0L8 6.94l1.72-1.72a.75.75 0 1 1 1.06 1.06L9.06 8l1.72 1.72a.75.75 0 1 1-1.06 1.06L8 9.06l-1.72 1.72a.75.75 0 0 1-1.06-1.06L6.94 8 5.22 6.28a.75.75 0 0 1 0-1.06z"/></svg>
+    <div>
+      <strong>Redis connection failed.</strong> Errors are not being captured.
+      <% if @stats[:buffer][:error].present? %>
+        <br><span class="text-muted text-xs"><%= @stats[:buffer][:error] %></span>
+      <% end %>
+      <br><span class="text-muted text-xs">Configured URL: <code style="background: hsl(var(--muted)); padding: 0.125rem 0.375rem; border-radius: 0.25rem;"><%= Findbug.config.redis_url %></code></span>
+    </div>
+  </div>
+<% end %>
+
+<%# Stats overview %>
+<div class="stats-grid">
+  <div class="stat-card">
+    <div class="stat-label">Unresolved Errors</div>
+    <div class="stat-value <%= @stats[:errors][:unresolved] > 0 ? 'error' : '' %>">
+      <%= @stats[:errors][:unresolved] %>
+    </div>
+    <div class="stat-change">Total: <%= @stats[:errors][:total] %></div>
+  </div>
+
+  <div class="stat-card">
+    <div class="stat-label">Errors (24h)</div>
+    <div class="stat-value"><%= @stats[:errors][:last_24h] %></div>
+    <div class="stat-change">Last 7d: <%= @stats[:errors][:last_7d] %></div>
+  </div>
+
+  <div class="stat-card">
+    <div class="stat-label">Avg Response Time</div>
+    <div class="stat-value"><%= @stats[:performance][:avg_duration] %><span class="text-muted text-sm">ms</span></div>
+    <div class="stat-change"><%= @stats[:performance][:last_24h] %> requests (24h)</div>
+  </div>
+
+  <div class="stat-card">
+    <div class="stat-label">N+1 Issues (24h)</div>
+    <div class="stat-value <%= @stats[:performance][:n_plus_one_count] > 0 ? 'warning' : '' %>">
+      <%= @stats[:performance][:n_plus_one_count] %>
+    </div>
+    <div class="stat-change">Performance issues detected</div>
+  </div>
+</div>
+
+<div class="grid-2">
+  <%# Recent Errors %>
+  <div class="card">
+    <div class="card-header">
+      <div>
+        <h2 class="card-title">Recent Errors</h2>
+        <p class="card-description">Unresolved errors from your application</p>
+      </div>
+      <a href="<%= findbug.errors_path %>" class="btn btn-outline btn-sm">View All</a>
+    </div>
+
+    <% if @recent_errors.any? %>
+      <table class="table">
+        <thead>
+          <tr>
+            <th>Error</th>
+            <th>Count</th>
+            <th>Last Seen</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% @recent_errors.each do |error| %>
+            <tr>
+              <td>
+                <a href="<%= findbug.error_path(error) %>">
+                  <strong class="font-mono"><%= error.exception_class %></strong>
+                </a>
+                <br>
+                <span class="text-muted text-sm"><%= truncate(error.message, length: 60) %></span>
+              </td>
+              <td>
+                <span class="badge badge-<%= error.occurrence_count > 10 ? 'error' : 'muted' %>">
+                  <%= error.occurrence_count %>
+                </span>
+              </td>
+              <td class="text-muted text-sm">
+                <%= time_ago_in_words(error.last_seen_at) %> ago
+              </td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    <% else %>
+      <div class="empty-state">
+        <div class="empty-state-icon">
+          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
+            <polyline points="22 4 12 14.01 9 11.01"/>
+          </svg>
+        </div>
+        <p>No unresolved errors</p>
+      </div>
+    <% end %>
+  </div>
+
+  <%# Slowest Endpoints %>
+  <div class="card">
+    <div class="card-header">
+      <div>
+        <h2 class="card-title">Slowest Endpoints</h2>
+        <p class="card-description">Performance data from the last 24 hours</p>
+      </div>
+      <a href="<%= findbug.performance_index_path %>" class="btn btn-outline btn-sm">View All</a>
+    </div>
+
+    <% if @slowest_endpoints.any? %>
+      <table class="table">
+        <thead>
+          <tr>
+            <th>Endpoint</th>
+            <th>Avg</th>
+            <th>Max</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% @slowest_endpoints.each do |endpoint| %>
+            <tr>
+              <td>
+                <a href="<%= findbug.performance_path(endpoint[:transaction_name]) %>" class="font-mono text-sm">
+                  <%= truncate(endpoint[:transaction_name], length: 35) %>
+                </a>
+              </td>
+              <td>
+                <span class="badge badge-<%= endpoint[:avg_duration_ms] > 500 ? 'warning' : 'muted' %>">
+                  <%= endpoint[:avg_duration_ms].round %>ms
+                </span>
+              </td>
+              <td class="text-muted text-sm">
+                <%= endpoint[:max_duration_ms].round %>ms
+              </td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    <% else %>
+      <div class="empty-state">
+        <div class="empty-state-icon">
+          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="12" y1="20" x2="12" y2="10"/>
+            <line x1="18" y1="20" x2="18" y2="4"/>
+            <line x1="6" y1="20" x2="6" y2="16"/>
+          </svg>
+        </div>
+        <p>No performance data yet</p>
+      </div>
+    <% end %>
+  </div>
+</div>
+
+<%# System Status %>
+<div class="card">
+  <div class="card-header">
+    <div>
+      <h2 class="card-title">System Status</h2>
+      <p class="card-description">Buffer and system health information</p>
+    </div>
+  </div>
+  <div class="card-content">
+    <div class="stats-grid">
+      <div>
+        <div class="stat-label">Error Buffer</div>
+        <div class="stat-value" style="font-size: 1.5rem;">
+          <%= @stats[:buffer][:error_queue_length] || 0 %>
+        </div>
+        <div class="stat-change">events pending</div>
+      </div>
+      <div>
+        <div class="stat-label">Perf Buffer</div>
+        <div class="stat-value" style="font-size: 1.5rem;">
+          <%= @stats[:buffer][:performance_queue_length] || 0 %>
+        </div>
+        <div class="stat-change">events pending</div>
+      </div>
+      <div>
+        <div class="stat-label">Circuit Breaker</div>
+        <div style="margin-top: 0.5rem;">
+          <span class="status-dot <%= @stats[:buffer][:circuit_breaker_state] == :closed ? 'success' : 'error' %>"></span>
+          <span class="text-sm"><%= @stats[:buffer][:circuit_breaker_state] %></span>
+        </div>
+        <div class="stat-change">Redis connection status</div>
+      </div>
+      <div>
+        <div class="stat-label">Total Events</div>
+        <div class="stat-value" style="font-size: 1.5rem;">
+          <%= @stats[:errors][:total] + @stats[:performance][:total] %>
+        </div>
+        <div class="stat-change">all time</div>
+      </div>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,137 @@
+<h1>Errors</h1>
+<p class="page-description">Track and manage application errors.</p>
+
+<%# Filters - single row %>
+<%= form_tag findbug.errors_path, method: :get, class: "filter-bar" do %>
+  <div class="filter-bar-filters">
+    <%= select_tag :status, options_for_select([
+      ["Unresolved", "unresolved"],
+      ["Resolved", "resolved"],
+      ["Ignored", "ignored"],
+      ["All Statuses", ""]
+    ], params[:status]), onchange: "this.form.submit()" %>
+
+    <%= select_tag :severity, options_for_select([
+      ["All Severities", ""],
+      ["Error", "error"],
+      ["Warning", "warning"],
+      ["Info", "info"]
+    ], params[:severity]), onchange: "this.form.submit()" %>
+
+    <%= select_tag :since, options_for_select([
+      ["Last Hour", "1h"],
+      ["Last 24 Hours", "24h"],
+      ["Last 7 Days", "7d"],
+      ["Last 30 Days", "30d"]
+    ], params[:since]), onchange: "this.form.submit()" %>
+
+    <%= select_tag :sort, options_for_select([
+      ["Most Recent", "recent"],
+      ["Most Occurrences", "occurrences"],
+      ["Oldest", "oldest"]
+    ], params[:sort]), onchange: "this.form.submit()" %>
+  </div>
+
+  <div class="filter-bar-search">
+    <%= text_field_tag :search, params[:search], placeholder: "Search errors..." %>
+    <%= submit_tag "Search", class: "btn btn-secondary btn-sm" %>
+  </div>
+<% end %>
+
+<%# Results count %>
+<p class="text-muted text-sm" style="margin-bottom: 1rem;">
+  Showing <%= @errors.size %> of <%= @total_count %> errors
+</p>
+
+<%# Error list %>
+<div class="card">
+  <% if @errors.any? %>
+    <table class="table">
+      <thead>
+        <tr>
+          <th style="width: 50%;">Error</th>
+          <th>Status</th>
+          <th>Count</th>
+          <th>Last Seen</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% @errors.each do |error| %>
+          <tr id="error_<%= error.id %>">
+            <td>
+              <a href="<%= findbug.error_path(error) %>">
+                <strong class="font-mono"><%= error.exception_class %></strong>
+              </a>
+              <br>
+              <span class="text-muted text-sm"><%= truncate(error.message, length: 80) %></span>
+              <div style="margin-top: 0.25rem;">
+                <span class="badge badge-<%= error.severity %>"><%= error.severity %></span>
+                <% if error.release_version %>
+                  <span class="text-muted text-xs" style="margin-left: 0.5rem;"><%= error.release_version.truncate(10) %></span>
+                <% end %>
+                <span class="text-muted text-xs" style="margin-left: 0.5rem;"><%= error.environment %></span>
+              </div>
+            </td>
+            <td>
+              <span class="badge badge-<%= error.status == 'unresolved' ? 'error' : (error.status == 'resolved' ? 'success' : 'muted') %>">
+                <%= error.status %>
+              </span>
+            </td>
+            <td>
+              <strong><%= error.occurrence_count %></strong>
+            </td>
+            <td class="text-muted text-sm">
+              <%= time_ago_in_words(error.last_seen_at) %> ago
+            </td>
+            <td>
+              <% if error.status == 'unresolved' %>
+                <%= button_to "Resolve", findbug.resolve_error_path(error), method: :post, class: "btn btn-secondary btn-sm", style: "margin-right: 4px;" %>
+                <%= button_to "Ignore", findbug.ignore_error_path(error), method: :post, class: "btn btn-ghost btn-sm" %>
+              <% else %>
+                <%= button_to "Reopen", findbug.reopen_error_path(error), method: :post, class: "btn btn-ghost btn-sm" %>
+              <% end %>
+            </td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+
+    <%# Pagination %>
+    <% if @total_count > @per_page %>
+      <div class="pagination">
+        <% total_pages = (@total_count.to_f / @per_page).ceil %>
+
+        <% if @page > 1 %>
+          <%= link_to "Prev", findbug.errors_path(params.permit!.merge(page: @page - 1)) %>
+        <% else %>
+          <span class="disabled">Prev</span>
+        <% end %>
+
+        <% (1..total_pages).each do |p| %>
+          <% if p == @page %>
+            <span class="current"><%= p %></span>
+          <% else %>
+            <%= link_to p, findbug.errors_path(params.permit!.merge(page: p)) %>
+          <% end %>
+        <% end %>
+
+        <% if @page < total_pages %>
+          <%= link_to "Next", findbug.errors_path(params.permit!.merge(page: @page + 1)) %>
+        <% else %>
+          <span class="disabled">Next</span>
+        <% end %>
+      </div>
+    <% end %>
+  <% else %>
+    <div class="empty-state">
+      <div class="empty-state-icon">
+        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="11" cy="11" r="8"/>
+          <path d="m21 21-4.3-4.3"/>
+        </svg>
+      </div>
+      <p>No errors found matching your filters.</p>
+    </div>
+  <% end %>
+</div>

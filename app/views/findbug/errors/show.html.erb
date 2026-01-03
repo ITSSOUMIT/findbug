@@ -1,0 +1,185 @@
+<div class="error-header">
+  <div>
+    <h1 class="error-title"><%= @error.exception_class %></h1>
+    <p class="error-message"><%= @error.message %></p>
+    <div class="error-meta">
+      <span class="badge badge-<%= @error.severity %>"><%= @error.severity.upcase %></span>
+      <span class="badge badge-<%= @error.status == 'unresolved' ? 'error' : 'success' %>">
+        <%= @error.status %>
+      </span>
+      <span class="text-muted text-sm"><%= @error.occurrence_count %> occurrences</span>
+      <span class="text-muted text-sm"><%= @error.environment %></span>
+      <% if @error.release_version %>
+        <span class="text-muted text-sm">Release: <%= @error.release_version %></span>
+      <% end %>
+    </div>
+  </div>
+
+  <div style="display: flex; gap: 0.5rem;">
+    <% if @error.status == 'unresolved' %>
+      <%= button_to "Resolve", findbug.resolve_error_path(@error), method: :post, class: "btn btn-primary" %>
+      <%= button_to "Ignore", findbug.ignore_error_path(@error), method: :post, class: "btn btn-secondary" %>
+    <% else %>
+      <%= button_to "Reopen", findbug.reopen_error_path(@error), method: :post, class: "btn btn-secondary" %>
+    <% end %>
+  </div>
+</div>
+
+<div class="grid-3-1">
+  <%# Left column - Backtrace %>
+  <div>
+    <div class="card">
+      <div class="card-header">
+        <h2 class="card-title">Backtrace</h2>
+      </div>
+      <div class="code-block" style="overflow-x: auto;">
+        <% @error.backtrace_lines.each_with_index do |line, i| %>
+          <span class="code-line" style="white-space: nowrap;">
+            <span class="code-line-number"><%= i + 1 %></span><%= line %>
+          </span>
+        <% end %>
+      </div>
+    </div>
+
+    <%# Breadcrumbs %>
+    <% if @error.breadcrumbs.any? %>
+      <div class="card">
+        <div class="card-header">
+          <h2 class="card-title">Breadcrumbs</h2>
+        </div>
+        <table class="table">
+          <thead>
+            <tr>
+              <th>Time</th>
+              <th>Category</th>
+              <th>Message</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% @error.breadcrumbs.each do |crumb| %>
+              <tr>
+                <td class="text-muted text-xs">
+                  <%= crumb['timestamp'] || crumb[:timestamp] %>
+                </td>
+                <td>
+                  <span class="badge badge-muted"><%= crumb['category'] || crumb[:category] %></span>
+                </td>
+                <td><%= crumb['message'] || crumb[:message] %></td>
+              </tr>
+            <% end %>
+          </tbody>
+        </table>
+      </div>
+    <% end %>
+  </div>
+
+  <%# Right column - Context %>
+  <div>
+    <%# Timing %>
+    <div class="card">
+      <div class="card-header">
+        <h2 class="card-title">Timing</h2>
+      </div>
+      <div class="card-content">
+        <div style="display: grid; gap: 0.75rem;">
+          <div style="display: flex; justify-content: space-between;">
+            <span class="text-muted text-sm">First seen</span>
+            <span class="text-sm local-time" data-utc="<%= @error.first_seen_at.iso8601 %>"><%= @error.first_seen_at.strftime("%Y-%m-%d %H:%M:%S UTC") %></span>
+          </div>
+          <div class="separator"></div>
+          <div style="display: flex; justify-content: space-between;">
+            <span class="text-muted text-sm">Last seen</span>
+            <span class="text-sm local-time" data-utc="<%= @error.last_seen_at.iso8601 %>"><%= @error.last_seen_at.strftime("%Y-%m-%d %H:%M:%S UTC") %></span>
+          </div>
+          <div class="separator"></div>
+          <div style="display: flex; justify-content: space-between;">
+            <span class="text-muted text-sm">Total occurrences</span>
+            <strong><%= @error.occurrence_count %></strong>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <%# User Info %>
+    <% if @error.user.present? %>
+      <div class="card">
+        <div class="card-header">
+          <h2 class="card-title">User</h2>
+        </div>
+        <div class="card-content">
+          <div style="display: grid; gap: 0.75rem;">
+            <% @error.user.each do |key, value| %>
+              <div style="display: flex; justify-content: space-between;">
+                <span class="text-muted text-sm"><%= key %></span>
+                <span class="text-sm"><%= value %></span>
+              </div>
+              <% unless key == @error.user.keys.last %><div class="separator"></div><% end %>
+            <% end %>
+          </div>
+        </div>
+      </div>
+    <% end %>
+
+    <%# Request Info %>
+    <% if @error.request.present? %>
+      <div class="card">
+        <div class="card-header">
+          <h2 class="card-title">Request</h2>
+        </div>
+        <div class="card-content" style="overflow: hidden;">
+          <div style="display: grid; gap: 0.75rem;">
+            <% @error.request.each_with_index do |(key, value), idx| %>
+              <% next if value.blank? || (value.is_a?(Hash) && value.empty?) %>
+              <div style="overflow: hidden;">
+                <span class="text-muted text-xs" style="text-transform: uppercase; letter-spacing: 0.05em;"><%= key %></span>
+                <div class="text-sm" style="word-break: break-all; margin-top: 0.25rem; overflow: hidden;">
+                  <% if value.is_a?(Hash) %>
+                    <pre class="code-block" style="margin: 0; padding: 0.5rem; white-space: pre-wrap; word-break: break-word; overflow-x: auto;"><%= JSON.pretty_generate(value) %></pre>
+                  <% else %>
+                    <%= value.to_s %>
+                  <% end %>
+                </div>
+              </div>
+            <% end %>
+          </div>
+        </div>
+      </div>
+    <% end %>
+
+    <%# Tags %>
+    <% if @error.tags.present? && @error.tags.any? %>
+      <div class="card">
+        <div class="card-header">
+          <h2 class="card-title">Tags</h2>
+        </div>
+        <div class="card-content" style="display: flex; flex-wrap: wrap; gap: 0.5rem;">
+          <% @error.tags.each do |key, value| %>
+            <span class="badge badge-info"><%= key %>: <%= value %></span>
+          <% end %>
+        </div>
+      </div>
+    <% end %>
+
+    <%# Similar Errors %>
+    <% if @similar_errors.any? %>
+      <div class="card">
+        <div class="card-header">
+          <h2 class="card-title">Similar Errors</h2>
+        </div>
+        <div class="card-content">
+          <% @similar_errors.each_with_index do |error, idx| %>
+            <div>
+              <a href="<%= findbug.error_path(error) %>" class="text-sm">
+                <%= truncate(error.message, length: 50) %>
+              </a>
+              <div class="text-muted text-xs" style="margin-top: 0.25rem;">
+                <%= error.occurrence_count %> occurrences · <%= time_ago_in_words(error.last_seen_at) %> ago
+              </div>
+            </div>
+            <% unless idx == @similar_errors.length - 1 %><div class="separator"></div><% end %>
+          <% end %>
+        </div>
+      </div>
+    <% end %>
+  </div>
+</div>
