@@ -1,6 +1,6 @@
 # FindBug
 
-[![Gem Version](https://badge.fury.io/rb/findbug.svg)](https://badge.fury.io/rb/findbug/install)
+[![Gem Version](https://badge.fury.io/rb/findbug.svg)](https://rubygems.org/gems/findbug)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![GitHub](https://img.shields.io/github/stars/ITSSOUMIT/findbug?style=social)](https://github.com/ITSSOUMIT/findbug)
 
