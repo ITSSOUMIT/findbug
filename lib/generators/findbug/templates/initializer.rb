@@ -1,8 +1,8 @@
 # frozen_string_literal: true
 
-# Findbug Configuration
+# FindBug Configuration
 #
-# This file configures Findbug, your self-hosted error and performance monitoring.
+# This file configures FindBug, your self-hosted error and performance monitoring.
 # See https://github.com/ITSSOUMIT/findbug for full documentation.
 #
 

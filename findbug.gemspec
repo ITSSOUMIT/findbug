@@ -9,7 +9,7 @@ Gem::Specification.new do |spec|
   spec.email = ["its.soumit.das@gmail.com"]
 
   spec.summary = "Self-hosted error tracking and performance monitoring for Rails"
-  spec.description = "Findbug is a Sentry-like error tracking and performance monitoring gem " \
+  spec.description = "FindBug is a Sentry-like error tracking and performance monitoring gem " \
                      "that stores data locally using Redis and your database. Features include " \
                      "exception capture, performance instrumentation, alerting, and a built-in dashboard."
   spec.homepage = "https://github.com/ITSSOUMIT/findbug"

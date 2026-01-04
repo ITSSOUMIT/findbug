@@ -1,12 +1,12 @@
-# Findbug
+# FindBug
 
-[![Gem Version](https://badge.fury.io/rb/findbug.svg)](https://badge.fury.io/rb/findbug)
+[![Gem Version](https://badge.fury.io/rb/findbug.svg)](https://badge.fury.io/rb/findbug/install)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![GitHub](https://img.shields.io/github/stars/ITSSOUMIT/findbug?style=social)](https://github.com/ITSSOUMIT/findbug)
 
 **Self-hosted error tracking and performance monitoring for Rails applications.**
 
-Findbug provides Sentry-like functionality with all data stored on your own infrastructure using Redis and your database. Zero external dependencies, full data ownership.
+FindBug provides Sentry-like functionality with all data stored on your own infrastructure using Redis and your database. Zero external dependencies, full data ownership.
 
 ## Features
 
@@ -19,9 +19,9 @@ Findbug provides Sentry-like functionality with all data stored on your own infr
 - **Works Out of the Box** - Built-in background persister, no job scheduler required
 - **Rails 7+ Native** - Designed for modern Rails applications
 
-## Why Findbug?
+## Why FindBug?
 
-| Feature | Sentry/Bugsnag | Findbug |
+| Feature | Sentry/Bugsnag | FindBug |
 |---------|----------------|---------|
 | Data Location | Third-party servers | Your infrastructure |
 | Monthly Cost | $26+ per seat | Free |
@@ -56,7 +56,7 @@ rails db:migrate
 
 ### 1. Configure Redis (Optional)
 
-Findbug uses Redis as a high-speed buffer. By default, it connects to `redis://localhost:6379/1`.
+FindBug uses Redis as a high-speed buffer. By default, it connects to `redis://localhost:6379/1`.
 
 To use a different Redis URL, set the environment variable:
 
@@ -83,7 +83,7 @@ Access the dashboard at: `http://localhost:3000/findbug`
 
 ### 3. That's It!
 
-Findbug automatically:
+FindBug automatically:
 - Captures unhandled exceptions
 - Monitors request performance
 - Persists data to your database (via built-in background thread)
@@ -178,7 +178,7 @@ end
 
 ### Automatic Error Capture
 
-Findbug automatically captures:
+FindBug automatically captures:
 - Unhandled exceptions in controllers
 - Errors reported via `Rails.error.handle` / `Rails.error.report`
 - Any exception that bubbles up through the middleware stack
@@ -299,7 +299,7 @@ rails findbug:db:stats
 
 ## Advanced: Using ActiveJob Instead of Built-in Thread
 
-By default, Findbug uses a built-in background thread for persistence. If you prefer to use ActiveJob with your own job backend:
+By default, FindBug uses a built-in background thread for persistence. If you prefer to use ActiveJob with your own job backend:
 
 ```ruby
 # config/initializers/findbug.rb
