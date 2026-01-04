@@ -6,11 +6,7 @@ require "rails/engine"
 # __dir__ is lib/findbug, so we go up two levels to get the gem root
 FINDBUG_GEM_ROOT = File.expand_path("../..", __dir__)
 
-# Require models (needed for persistence)
-require_relative "../../app/models/findbug/error_event"
-require_relative "../../app/models/findbug/performance_event"
-
-# Require controllers
+# Require controllers (needed for routing)
 require_relative "../../app/controllers/findbug/application_controller"
 require_relative "../../app/controllers/findbug/dashboard_controller"
 require_relative "../../app/controllers/findbug/errors_controller"

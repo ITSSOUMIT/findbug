@@ -50,6 +50,18 @@ module Findbug
   # - All models to be loaded
   #
   class Railtie < Rails::Railtie
+    # Load models early for multi-tenant gems (Apartment/ros-apartment)
+    #
+    # Apartment resolves excluded_models via Object.const_get during its
+    # initializer. We need our models loaded before that happens.
+    # Using :load_active_record hook ensures ActiveRecord::Base is available.
+    #
+    initializer "findbug.load_models", after: :load_active_record do
+      models_path = File.expand_path("../../app/models/findbug", __dir__)
+      require "#{models_path}/error_event"
+      require "#{models_path}/performance_event"
+    end
+
     # Register our middleware to catch exceptions
     #
     # MIDDLEWARE ORDER MATTERS!

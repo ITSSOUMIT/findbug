@@ -102,9 +102,9 @@ Findbug.configure do |config|
   # ============================================================================
 
   # Dashboard authentication (required for dashboard to be enabled)
-  # We recommend using environment variables for security
-  config.web_username = ENV["FINDBUG_USERNAME"]
-  config.web_password = ENV["FINDBUG_PASSWORD"]
+  # Default credentials are set for development - CHANGE THESE IN PRODUCTION!
+  config.web_username = ENV.fetch("FINDBUG_USERNAME", "admin")
+  config.web_password = ENV.fetch("FINDBUG_PASSWORD", "findbug")
 
   # Dashboard URL path (default: "/findbug")
   config.web_path = "/findbug"
