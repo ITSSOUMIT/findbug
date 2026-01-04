@@ -12,7 +12,7 @@ Gem::Specification.new do |spec|
   spec.description = "Findbug is a Sentry-like error tracking and performance monitoring gem " \
                      "that stores data locally using Redis and your database. Features include " \
                      "exception capture, performance instrumentation, alerting, and a built-in dashboard."
-  spec.homepage = "https://github.com/soumitdas/findbug"
+  spec.homepage = "https://github.com/ITSSOUMIT/findbug"
   spec.license = "MIT"
   spec.required_ruby_version = ">= 3.1.0"
 

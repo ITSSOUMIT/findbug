@@ -108,12 +108,11 @@ module Findbug
 
         persisted = 0
         events.each do |event_data|
-          begin
-            Findbug::ErrorEvent.upsert_from_event(event_data)
-            persisted += 1
-          rescue StandardError => e
-            Findbug.logger.error("[Findbug] Failed to persist error: #{e.message}")
-          end
+          scrubbed = Findbug::Processing::DataScrubber.scrub(event_data)
+          Findbug::ErrorEvent.upsert_from_event(scrubbed)
+          persisted += 1
+        rescue StandardError => e
+          Findbug.logger.error("[Findbug] Failed to persist error: #{e.message}")
         end
 
         Findbug.logger.info("[Findbug] Persisted #{persisted}/#{events.size} errors") if persisted > 0
@@ -125,12 +124,11 @@ module Findbug
 
         persisted = 0
         events.each do |event_data|
-          begin
-            Findbug::PerformanceEvent.create_from_event(event_data)
-            persisted += 1
-          rescue StandardError => e
-            Findbug.logger.error("[Findbug] Failed to persist performance event: #{e.message}")
-          end
+          scrubbed = Findbug::Processing::DataScrubber.scrub(event_data)
+          Findbug::PerformanceEvent.create_from_event(scrubbed)
+          persisted += 1
+        rescue StandardError => e
+          Findbug.logger.error("[Findbug] Failed to persist performance event: #{e.message}")
         end
 
         Findbug.logger.info("[Findbug] Persisted #{persisted}/#{events.size} performance events") if persisted > 0

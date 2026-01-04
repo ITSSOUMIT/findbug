@@ -1,26 +1,40 @@
 # Findbug
 
-Self-hosted error tracking and performance monitoring for Rails applications. Think Sentry, but with all data stored locally using Redis and your database.
+[![Gem Version](https://badge.fury.io/rb/findbug.svg)](https://badge.fury.io/rb/findbug)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![GitHub](https://img.shields.io/github/stars/ITSSOUMIT/findbug?style=social)](https://github.com/ITSSOUMIT/findbug)
+
+**Self-hosted error tracking and performance monitoring for Rails applications.**
+
+Findbug provides Sentry-like functionality with all data stored on your own infrastructure using Redis and your database. Zero external dependencies, full data ownership.
 
 ## Features
 
-- **Error Tracking** - Capture exceptions with full context, stack traces, and breadcrumbs
-- **Performance Monitoring** - Track request timing, SQL queries, and N+1 detection
-- **Self-Hosted** - All data stays on your infrastructure (Redis + Database)
+- **Error Tracking** - Capture exceptions with full context, stack traces, and request data
+- **Performance Monitoring** - Track request timing, SQL queries, and automatic N+1 detection
+- **Self-Hosted** - All data stays on your infrastructure (Redis + PostgreSQL/MySQL)
 - **Zero Performance Impact** - Async writes via Redis buffer, never blocks your requests
-- **Built-in Dashboard** - Mountable web UI at `/findbug` (like Sidekiq)
-- **Multi-channel Alerts** - Email, Slack, Discord, and webhooks
-- **Rails 7+ Native** - Uses modern Rails patterns (Hotwire, ActiveJob)
+- **Built-in Dashboard** - Beautiful web UI for viewing errors and performance metrics
+- **Multi-channel Alerts** - Email, Slack, Discord, and custom webhooks
+- **Works Out of the Box** - Built-in background persister, no job scheduler required
+- **Rails 7+ Native** - Designed for modern Rails applications
 
 ## Why Findbug?
 
-| Feature | Sentry | Findbug |
-|---------|--------|---------|
-| Data Location | Their servers | Your infrastructure |
-| Monthly Cost | $26+ / team | Free |
+| Feature | Sentry/Bugsnag | Findbug |
+|---------|----------------|---------|
+| Data Location | Third-party servers | Your infrastructure |
+| Monthly Cost | $26+ per seat | Free |
 | Privacy/Compliance | Requires DPA | Full control |
 | Network Dependency | Required | None |
-| Offline Support | No | Yes |
+| Setup Complexity | API keys, SDKs | One gem, one command |
+
+## Requirements
+
+- Ruby 3.1+
+- Rails 7.0+
+- Redis 4.0+
+- PostgreSQL or MySQL
 
 ## Installation
 
@@ -40,14 +54,20 @@ rails db:migrate
 
 ## Quick Start
 
-### 1. Configure Redis
+### 1. Configure Redis (Optional)
 
-Findbug uses Redis as a high-speed buffer. Configure in `config/initializers/findbug.rb`:
+Findbug uses Redis as a high-speed buffer. By default, it connects to `redis://localhost:6379/1`.
+
+To use a different Redis URL, set the environment variable:
+
+```bash
+export FINDBUG_REDIS_URL=redis://localhost:6379/1
+```
+
+Or configure in `config/initializers/findbug.rb`:
 
 ```ruby
-Findbug.configure do |config|
-  config.redis_url = ENV.fetch("FINDBUG_REDIS_URL", "redis://localhost:6379/1")
-end
+config.redis_url = ENV.fetch("FINDBUG_REDIS_URL", "redis://localhost:6379/1")
 ```
 
 ### 2. Enable the Dashboard
@@ -61,83 +81,95 @@ export FINDBUG_PASSWORD=your-secure-password
 
 Access the dashboard at: `http://localhost:3000/findbug`
 
-### 3. Set Up Background Jobs
+### 3. That's It!
 
-Findbug requires periodic jobs to persist data from Redis to your database:
-
-**With Sidekiq + sidekiq-scheduler:**
-
-```yaml
-# config/sidekiq.yml
-:schedule:
-  findbug_persist:
-    cron: '*/30 * * * * *'  # Every 30 seconds
-    class: Findbug::Jobs::PersistJob
-
-  findbug_cleanup:
-    cron: '0 3 * * *'       # Daily at 3 AM
-    class: Findbug::Jobs::CleanupJob
-```
-
-**With Solid Queue (Rails 8):**
-
-```ruby
-# app/jobs/findbug_scheduler_job.rb
-class FindbugSchedulerJob < ApplicationJob
-  def perform
-    Findbug::Jobs::PersistJob.perform_now
-    self.class.set(wait: 30.seconds).perform_later
-  end
-end
-```
+Findbug automatically:
+- Captures unhandled exceptions
+- Monitors request performance
+- Persists data to your database (via built-in background thread)
+- No additional job scheduler required
 
 ## Configuration
 
-Full configuration options:
+All configuration options in `config/initializers/findbug.rb`:
 
 ```ruby
 Findbug.configure do |config|
-  # Core
+  # ===================
+  # Core Settings
+  # ===================
   config.enabled = !Rails.env.test?
-  config.redis_url = "redis://localhost:6379/1"
+  config.redis_url = ENV.fetch("FINDBUG_REDIS_URL", "redis://localhost:6379/1")
   config.redis_pool_size = 5
 
+  # ===================
   # Error Capture
+  # ===================
   config.sample_rate = 1.0  # Capture 100% of errors
-  config.ignored_exceptions = [ActiveRecord::RecordNotFound]
+  config.ignored_exceptions = [
+    ActiveRecord::RecordNotFound,
+    ActionController::RoutingError
+  ]
   config.ignored_paths = [/^\/health/, /^\/assets/]
 
-  # Performance
+  # ===================
+  # Performance Monitoring
+  # ===================
   config.performance_enabled = true
   config.performance_sample_rate = 0.1  # Sample 10% of requests
   config.slow_request_threshold_ms = 0
   config.slow_query_threshold_ms = 100
 
-  # Security
-  config.scrub_fields = %w[password api_key credit_card ssn]
+  # ===================
+  # Data Security
+  # ===================
+  config.scrub_fields = %w[password api_key credit_card ssn token secret]
   config.scrub_headers = true
 
-  # Storage
+  # ===================
+  # Storage & Retention
+  # ===================
   config.retention_days = 30
+  config.max_buffer_size = 10_000
 
+  # ===================
   # Dashboard
+  # ===================
   config.web_username = ENV["FINDBUG_USERNAME"]
   config.web_password = ENV["FINDBUG_PASSWORD"]
   config.web_path = "/findbug"
 
-  # Alerts
+  # ===================
+  # Alerts (Optional)
+  # ===================
   config.alerts do |alerts|
     alerts.throttle_period = 5.minutes
 
-    alerts.slack(
-      enabled: true,
-      webhook_url: ENV["SLACK_WEBHOOK_URL"]
-    )
+    # Slack
+    # alerts.slack(
+    #   enabled: true,
+    #   webhook_url: ENV["SLACK_WEBHOOK_URL"],
+    #   channel: "#errors"
+    # )
 
-    alerts.email(
-      enabled: true,
-      recipients: ["team@example.com"]
-    )
+    # Email
+    # alerts.email(
+    #   enabled: true,
+    #   recipients: ["team@example.com"]
+    # )
+
+    # Discord
+    # alerts.discord(
+    #   enabled: true,
+    #   webhook_url: ENV["DISCORD_WEBHOOK_URL"]
+    # )
+
+    # Custom Webhook
+    # alerts.webhook(
+    #   enabled: true,
+    #   url: "https://your-service.com/webhook",
+    #   headers: { "Authorization" => "Bearer token" }
+    # )
   end
 end
 ```
@@ -148,13 +180,13 @@ end
 
 Findbug automatically captures:
 - Unhandled exceptions in controllers
-- Errors reported via `Rails.error.handle`
-- Background job failures
+- Errors reported via `Rails.error.handle` / `Rails.error.report`
+- Any exception that bubbles up through the middleware stack
 
 ### Manual Error Capture
 
 ```ruby
-# Capture an exception
+# Capture an exception with context
 begin
   risky_operation
 rescue => e
@@ -162,8 +194,8 @@ rescue => e
   # Handle gracefully...
 end
 
-# Capture a message
-Findbug.capture_message("User exceeded rate limit", :warning, user_id: 123)
+# Capture a message (non-exception event)
+Findbug.capture_message("Rate limit exceeded", :warning, user_id: 123)
 ```
 
 ### Adding Context
@@ -197,12 +229,13 @@ findbug_breadcrumb("Payment API called", category: "http", data: { amount: 99.99
 
 ### Performance Tracking
 
-Automatic tracking for:
-- HTTP request timing
-- SQL query counting and N+1 detection
+Automatic tracking includes:
+- HTTP request duration
+- SQL query count and timing
+- N+1 query detection
 - View rendering time
 
-Manual tracking:
+Manual tracking for custom operations:
 
 ```ruby
 Findbug.track_performance("external_api_call") do
@@ -216,60 +249,127 @@ end
 ┌─────────────────────────────────────────────────────────────────┐
 │                         Your Rails App                          │
 ├─────────────────────────────────────────────────────────────────┤
-│  Middleware ──► Exception Capture ──► Redis Buffer (async)      │
-│                                              │                   │
-│  Performance ──► Instrumentation ──► Redis Buffer (async)       │
-│                                              │                   │
-│                                              ▼                   │
-│                                    ┌─────────────────┐          │
-│                                    │  PersistJob     │          │
-│                                    │  (every 30s)    │          │
-│                                    └────────┬────────┘          │
-│                                              │                   │
-│                                              ▼                   │
-│  Dashboard ◄────────────── Database (PostgreSQL/MySQL)          │
-│  (/findbug)                                                      │
+│                                                                 │
+│  Request ──► Middleware ──► Exception? ──► Redis Buffer        │
+│                                               (async, ~1ms)     │
+│                                                    │            │
+│  Request ──► Instrumentation ──► Perf Data ──► Redis Buffer    │
+│                                               (async, ~1ms)     │
+│                                                    │            │
+│                                                    ▼            │
+│                                         ┌──────────────────┐   │
+│                                         │ BackgroundThread │   │
+│                                         │   (every 30s)    │   │
+│                                         └────────┬─────────┘   │
+│                                                  │              │
+│                                                  ▼              │
+│  Dashboard ◄──────────────────── Database (PostgreSQL/MySQL)   │
+│  (/findbug)                                                     │
+│                                                                 │
 └─────────────────────────────────────────────────────────────────┘
 ```
 
-**Performance guarantees:**
+**Performance Guarantees:**
 - Error capture: ~1-2ms (async Redis write)
-- Never blocks your request
-- Circuit breaker protects against Redis failures
-- Separate connection pool (won't affect your app's Redis)
+- Never blocks your HTTP requests
+- Circuit breaker auto-disables if Redis is unavailable
+- Dedicated connection pool (won't affect your app's Redis usage)
 
 ## Rake Tasks
 
 ```bash
-# Show status and configuration
-rake findbug:status
+# Show configuration and system status
+rails findbug:status
 
 # Test error capture
-rake findbug:test
+rails findbug:test
 
-# Manually flush buffer to database
-rake findbug:flush
+# Manually flush Redis buffer to database
+rails findbug:flush
 
-# Run cleanup (remove old records)
-rake findbug:cleanup
+# Run retention cleanup
+rails findbug:cleanup
 
-# Clear Redis buffers
-rake findbug:clear_buffers
+# Clear Redis buffers (use with caution)
+rails findbug:clear_buffers
+
+# Show database statistics
+rails findbug:db:stats
+```
+
+## Advanced: Using ActiveJob Instead of Built-in Thread
+
+By default, Findbug uses a built-in background thread for persistence. If you prefer to use ActiveJob with your own job backend:
+
+```ruby
+# config/initializers/findbug.rb
+config.auto_persist = false  # Disable built-in thread
+```
+
+Then schedule the jobs with your preferred scheduler:
+
+```ruby
+# With any scheduler (Sidekiq, GoodJob, Solid Queue, etc.)
+Findbug::PersistJob.perform_later   # Run every 30 seconds
+Findbug::CleanupJob.perform_later   # Run daily
+```
+
+## API Reference
+
+### Error Capture
+
+```ruby
+Findbug.capture_exception(exception, context = {})
+Findbug.capture_message(message, level = :info, context = {})
+```
+
+### Performance Tracking
+
+```ruby
+Findbug.track_performance(name) { ... }
+```
+
+### Controller Helpers
+
+```ruby
+findbug_set_user(user)
+findbug_set_context(hash)
+findbug_breadcrumb(message, category:, data: {})
+```
+
+### Configuration
+
+```ruby
+Findbug.config           # Access configuration
+Findbug.enabled?         # Check if enabled
+Findbug.reset!           # Reset configuration (for testing)
 ```
 
 ## Development
 
 ```bash
-git clone https://github.com/soumitdas/findbug.git
+git clone https://github.com/ITSSOUMIT/findbug.git
 cd findbug
 bin/setup
-rake spec
+bundle exec rspec
 ```
 
 ## Contributing
 
-Bug reports and pull requests are welcome on GitHub at https://github.com/soumitdas/findbug.
+Bug reports and pull requests are welcome on GitHub at https://github.com/ITSSOUMIT/findbug.
+
+If you encounter any bugs, please open an issue or send an email to hey@soumit.in.
+
+1. Fork it
+2. Create your feature branch (`git checkout -b feature/my-feature`)
+3. Commit your changes (`git commit -am 'Add my feature'`)
+4. Push to the branch (`git push origin feature/my-feature`)
+5. Create a Pull Request
 
 ## License
 
 The gem is available as open source under the terms of the [MIT License](https://opensource.org/licenses/MIT).
+
+## Credits
+
+Built by [Soumit Das](https://github.com/ITSSOUMIT).

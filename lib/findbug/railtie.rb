@@ -117,13 +117,13 @@ module Findbug
       app.config.after_initialize do
         next unless Findbug.config.web_enabled?
 
-        require_relative "web/engine"
+        require_relative "engine"
 
         # Add routes programmatically
-        # This is equivalent to `mount Findbug::Web::Engine => "/findbug"` in routes.rb
+        # This is equivalent to `mount Findbug::Engine => "/findbug"` in routes.rb
         # but automatic!
         app.routes.append do
-          mount Findbug::Web::Engine => Findbug.config.web_path
+          mount Findbug::Engine => Findbug.config.web_path
         end
       end
     end

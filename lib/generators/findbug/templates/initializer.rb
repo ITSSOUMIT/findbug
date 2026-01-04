@@ -3,7 +3,7 @@
 # Findbug Configuration
 #
 # This file configures Findbug, your self-hosted error and performance monitoring.
-# See https://github.com/soumitdas/findbug for full documentation.
+# See https://github.com/ITSSOUMIT/findbug for full documentation.
 #
 
 Findbug.configure do |config|

@@ -18,8 +18,8 @@ require_relative "findbug/configuration"
 #    This takes ~1-2ms and doesn't block your request.
 #
 # 2. BACKGROUND PERSISTENCE
-#    A periodic job (via ActiveJob) pulls events from Redis and
-#    batch-inserts them to the database. This happens outside your
+#    A periodic job (via ActiveJob or built-in thread) pulls events from Redis
+#    and batch-inserts them to the database. This happens outside your
 #    request cycle.
 #
 # 3. CIRCUIT BREAKER
@@ -39,23 +39,23 @@ require_relative "findbug/configuration"
 # =========
 #
 #   [Exception occurs]
-#          │
-#          ▼
+#          |
+#          v
 #   [Middleware catches it]
-#          │
-#          ▼
+#          |
+#          v
 #   [Scrub sensitive data]
-#          │
-#          ▼
-#   [Push to Redis buffer] ◄── Async, non-blocking (Thread.new)
-#          │
-#          ▼
-#   [PersistJob runs every 30s]
-#          │
-#          ▼
+#          |
+#          v
+#   [Push to Redis buffer] <-- Async, non-blocking (Thread.new)
+#          |
+#          v
+#   [BackgroundPersister runs every 30s]
+#          |
+#          v
 #   [Batch insert to Database]
-#          │
-#          ▼
+#          |
+#          v
 #   [Dashboard displays data]
 #
 module Findbug
@@ -201,10 +201,14 @@ module Findbug
   end
 end
 
-# Load core modules
+# Load core library modules (these stay in lib/ as they're not Rails-autoloadable)
+require_relative "findbug/storage/connection_pool"
+require_relative "findbug/storage/circuit_breaker"
 require_relative "findbug/storage/redis_buffer"
-require_relative "findbug/jobs/persist_job"
 require_relative "findbug/processing/data_scrubber"
+require_relative "findbug/capture/context"
+require_relative "findbug/capture/exception_handler"
+require_relative "findbug/capture/message_handler"
 require_relative "findbug/capture/middleware"
 
 # Load the Railtie if Rails is available
