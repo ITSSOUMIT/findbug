@@ -297,6 +297,59 @@ rails findbug:clear_buffers
 rails findbug:db:stats
 ```
 
+## Multi-Tenant Applications (Apartment/ros-apartment)
+
+If you're using [ros-apartment](https://github.com/rails-on-services/apartment) or similar multi-tenant gems with PostgreSQL schemas, FindBug's tables need to stay in the public schema and the dashboard path should be excluded from tenant switching.
+
+### 1. Exclude FindBug Models
+
+Add FindBug models to the `excluded_models` list in `config/initializers/apartment.rb`:
+
+```ruby
+Apartment.configure do |config|
+  config.excluded_models = %w[
+    # Your existing excluded models...
+    Findbug::ErrorEvent
+    Findbug::PerformanceEvent
+  ]
+end
+```
+
+### 2. Exclude FindBug Dashboard Path
+
+Add `/findbug` to your tenant switching middleware's excluded paths:
+
+```ruby
+class SwitchTenantMiddleware < Apartment::Elevators::Generic
+  EXCLUDED_PATHS = %w[
+    /findbug
+    # Your other excluded paths...
+  ].freeze
+
+  def parse_tenant_name(request)
+    return nil if excluded_path?(request.path)
+    # ... rest of your tenant logic
+  end
+
+  private
+
+  def excluded_path?(path)
+    EXCLUDED_PATHS.any? { |excluded| path.start_with?(excluded) }
+  end
+end
+```
+
+### 3. Run Migrations in Public Schema
+
+Ensure FindBug migrations run in the public schema:
+
+```bash
+# Run migrations in public schema only (not per-tenant)
+rails db:migrate
+```
+
+The FindBug tables (`findbug_error_events`, `findbug_performance_events`) will be created in the public schema and shared across all tenants.
+
 ## Advanced: Using ActiveJob Instead of Built-in Thread
 
 By default, FindBug uses a built-in background thread for persistence. If you prefer to use ActiveJob with your own job backend:

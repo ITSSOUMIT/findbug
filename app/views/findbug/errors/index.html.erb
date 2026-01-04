@@ -9,27 +9,28 @@
       ["Resolved", "resolved"],
       ["Ignored", "ignored"],
       ["All Statuses", ""]
-    ], params[:status]), onchange: "this.form.submit()" %>
+    ], params.key?(:status) ? params[:status] : "unresolved"), onchange: "this.form.submit()" %>
 
     <%= select_tag :severity, options_for_select([
       ["All Severities", ""],
       ["Error", "error"],
       ["Warning", "warning"],
       ["Info", "info"]
-    ], params[:severity]), onchange: "this.form.submit()" %>
+    ], params[:severity] || ""), onchange: "this.form.submit()" %>
 
     <%= select_tag :since, options_for_select([
+      ["All Time", ""],
       ["Last Hour", "1h"],
       ["Last 24 Hours", "24h"],
       ["Last 7 Days", "7d"],
       ["Last 30 Days", "30d"]
-    ], params[:since]), onchange: "this.form.submit()" %>
+    ], params[:since] || ""), onchange: "this.form.submit()" %>
 
     <%= select_tag :sort, options_for_select([
       ["Most Recent", "recent"],
       ["Most Occurrences", "occurrences"],
       ["Oldest", "oldest"]
-    ], params[:sort]), onchange: "this.form.submit()" %>
+    ], params[:sort] || "recent"), onchange: "this.form.submit()" %>
   </div>
 
   <div class="filter-bar-search">

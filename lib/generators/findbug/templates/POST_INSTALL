@@ -36,6 +36,12 @@ Next steps:
        )
      end
 
+7. (Multi-tenant apps) If using Apartment/ros-apartment, add to apartment.rb:
+
+     config.excluded_models = %w[Findbug::ErrorEvent Findbug::PerformanceEvent]
+
+   And exclude /findbug from your tenant switching middleware.
+
 For more information, see: https://github.com/ITSSOUMIT/findbug
 
 ===============================================================================
