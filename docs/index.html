@@ -1,0 +1,2288 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FindBug - Self-hosted Error Tracking for Rails</title>
+  <meta name="description" content="Self-hosted error tracking and performance monitoring for Rails applications. Sentry-like functionality with all data on your infrastructure.">
+  <meta name="keywords" content="error tracking, performance monitoring, rails, ruby, self-hosted, sentry alternative">
+  <link rel="canonical" href="https://findbug.dev">
+
+  <!-- Open Graph -->
+  <meta property="og:title" content="FindBug - Self-hosted Error Tracking for Rails">
+  <meta property="og:description" content="Self-hosted error tracking and performance monitoring for Rails applications. Full data ownership, zero monthly fees.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://findbug.dev">
+
+  <!-- Twitter -->
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="FindBug - Self-hosted Error Tracking for Rails">
+  <meta name="twitter:description" content="Self-hosted error tracking and performance monitoring for Rails applications.">
+
+  <!-- Favicon -->
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23fafafa' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M8 2l1.88 1.88'/%3E%3Cpath d='M14.12 3.88L16 2'/%3E%3Cpath d='M9 7.13v-1a3.003 3.003 0 1 1 6 0v1'/%3E%3Cpath d='M12 20c-3.3 0-6-2.7-6-6v-3a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v3c0 3.3-2.7 6-6 6'/%3E%3Cpath d='M12 20v-9'/%3E%3Cpath d='M6.53 9C4.6 8.8 3 7.1 3 5'/%3E%3Cpath d='M6 13H2'/%3E%3Cpath d='M3 21c0-2.1 1.7-3.9 3.8-4'/%3E%3Cpath d='M20.97 5c0 2.1-1.6 3.8-3.5 4'/%3E%3Cpath d='M22 13h-4'/%3E%3Cpath d='M17.2 17c2.1.1 3.8 1.9 3.8 4'/%3E%3C/svg%3E">
+
+  <style>
+    /* ========================================
+       CSS Variables (shadcn neutral dark)
+       ======================================== */
+    :root {
+      --background: 0 0% 3.9%;
+      --foreground: 0 0% 98%;
+      --card: 0 0% 3.9%;
+      --card-foreground: 0 0% 98%;
+      --popover: 0 0% 3.9%;
+      --popover-foreground: 0 0% 98%;
+      --primary: 0 0% 98%;
+      --primary-foreground: 0 0% 9%;
+      --secondary: 0 0% 14.9%;
+      --secondary-foreground: 0 0% 98%;
+      --muted: 0 0% 14.9%;
+      --muted-foreground: 0 0% 63.9%;
+      --accent: 0 0% 14.9%;
+      --accent-foreground: 0 0% 98%;
+      --destructive: 0 62.8% 30.6%;
+      --destructive-foreground: 0 0% 98%;
+      --border: 0 0% 14.9%;
+      --input: 0 0% 14.9%;
+      --ring: 0 0% 83.1%;
+      --success: 142.1 76.2% 36.3%;
+      --warning: 38 92% 50%;
+      --error: 0 84.2% 60.2%;
+      --info: 217.2 91.2% 59.8%;
+      --radius: 0.5rem;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans", Helvetica, Arial, sans-serif;
+      background-color: hsl(var(--background));
+      color: hsl(var(--foreground));
+      line-height: 1.6;
+      min-height: 100vh;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+
+    a { color: inherit; text-decoration: none; transition: color 0.15s; }
+
+    .container { max-width: 1200px; margin: 0 auto; padding: 0 1.5rem; }
+
+    /* Main Site Navigation */
+    .site-nav {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      z-index: 50;
+      background-color: hsl(var(--background) / 0.95);
+      backdrop-filter: blur(10px);
+    }
+
+    .nav-container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 1.5rem;
+      display: flex;
+      align-items: center;
+      height: 3.5rem;
+      gap: 1.5rem;
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 0.875rem;
+      font-weight: 600;
+      color: hsl(var(--foreground));
+    }
+
+    .logo svg { width: 1.25rem; height: 1.25rem; }
+
+    .nav-links {
+      display: flex;
+      align-items: center;
+      gap: 0.125rem;
+      margin-left: 1rem;
+    }
+
+    .nav-links a {
+      padding: 0.375rem 0.75rem;
+      font-size: 0.875rem;
+      font-weight: 500;
+      color: hsl(var(--muted-foreground));
+      border-radius: var(--radius);
+      transition: all 0.15s;
+    }
+
+    .nav-links a:hover {
+      color: hsl(var(--foreground));
+      background-color: hsl(var(--accent));
+    }
+
+    .nav-right {
+      margin-left: auto;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    /* Buttons */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      padding: 0.5rem 1rem;
+      font-size: 0.875rem;
+      font-weight: 500;
+      border-radius: var(--radius);
+      cursor: pointer;
+      transition: all 0.15s;
+      border: none;
+      text-decoration: none;
+    }
+
+    .btn:hover { opacity: 0.9; }
+
+    .btn-primary {
+      background-color: hsl(var(--primary));
+      color: hsl(var(--primary-foreground));
+    }
+
+    .btn-secondary {
+      background-color: hsl(var(--secondary));
+      color: hsl(var(--secondary-foreground));
+      border: 1px solid hsl(var(--border));
+    }
+
+    .btn-outline {
+      background: transparent;
+      color: hsl(var(--foreground));
+      border: 1px solid hsl(var(--border));
+    }
+
+    .btn-outline:hover {
+      background-color: hsl(var(--accent));
+    }
+
+    .btn-sm {
+      padding: 0.375rem 0.75rem;
+      font-size: 0.8125rem;
+    }
+
+    /* Hero Section */
+    .hero {
+      padding: 8rem 0 5rem;
+      text-align: center;
+    }
+
+    .hero-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.375rem 0.875rem;
+      background-color: hsl(var(--secondary));
+      border: 1px solid hsl(var(--border));
+      border-radius: 9999px;
+      font-size: 0.75rem;
+      color: hsl(var(--muted-foreground));
+      margin-bottom: 1.5rem;
+    }
+
+    .hero-badge span {
+      background-color: hsl(var(--success));
+      color: hsl(var(--primary-foreground));
+      padding: 0.125rem 0.5rem;
+      border-radius: 9999px;
+      font-size: 0.6875rem;
+      font-weight: 600;
+    }
+
+    h1 {
+      font-size: 3rem;
+      font-weight: 700;
+      letter-spacing: -0.025em;
+      line-height: 1.1;
+      margin-bottom: 1.25rem;
+    }
+
+    .hero p {
+      font-size: 1.125rem;
+      color: hsl(var(--muted-foreground));
+      margin-bottom: 2rem;
+      max-width: 600px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+
+    .hero-buttons {
+      display: flex;
+      gap: 0.75rem;
+      justify-content: center;
+      flex-wrap: wrap;
+      margin-bottom: 3rem;
+    }
+
+    .hero-code {
+      background-color: hsl(0 0% 7%);
+      border: 1px solid hsl(var(--border));
+      border-radius: var(--radius);
+      padding: 1.25rem 1.5rem;
+      max-width: 480px;
+      margin: 0 auto;
+      text-align: left;
+      font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+      font-size: 0.8125rem;
+      line-height: 1.7;
+    }
+
+    .hero-code .comment { color: hsl(var(--muted-foreground)); }
+    .hero-code .keyword { color: hsl(var(--info)); }
+    .hero-code .string { color: hsl(var(--success)); }
+
+    /* Features Section */
+    .features {
+      padding: 5rem 0;
+    }
+
+    .section-header {
+      text-align: center;
+      margin-bottom: 3rem;
+    }
+
+    .section-header h2 {
+      font-size: 1.875rem;
+      font-weight: 700;
+      letter-spacing: -0.025em;
+      margin-bottom: 0.75rem;
+    }
+
+    .section-header p {
+      font-size: 1rem;
+      color: hsl(var(--muted-foreground));
+      max-width: 500px;
+      margin: 0 auto;
+    }
+
+    /* Bento Grid */
+    .bento-grid {
+      display: grid;
+      grid-template-columns: repeat(12, 1fr);
+      grid-template-rows: auto;
+      gap: 1rem;
+    }
+
+    .bento-card {
+      background-color: hsl(var(--card));
+      border: 1px solid hsl(var(--border));
+      border-radius: var(--radius);
+      padding: 1.5rem;
+      transition: all 0.2s ease;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .bento-card:hover {
+      border-color: hsl(var(--muted-foreground) / 0.4);
+      transform: translateY(-2px);
+    }
+
+    .bento-card h3 {
+      font-size: 1rem;
+      font-weight: 600;
+      margin-bottom: 0.5rem;
+    }
+
+    .bento-card p {
+      color: hsl(var(--muted-foreground));
+      font-size: 0.875rem;
+      line-height: 1.5;
+    }
+
+    .bento-card .visual {
+      margin-top: auto;
+      padding-top: 1.25rem;
+    }
+
+    /* Card Sizes */
+    .bento-wide { grid-column: span 8; }
+    .bento-narrow { grid-column: span 4; }
+    .bento-half { grid-column: span 6; }
+    .bento-third { grid-column: span 4; }
+
+    @media (max-width: 1024px) {
+      .bento-wide, .bento-narrow, .bento-half { grid-column: span 6; }
+      .bento-third { grid-column: span 6; }
+    }
+
+    @media (max-width: 640px) {
+      .bento-wide, .bento-narrow, .bento-half, .bento-third { grid-column: span 12; }
+    }
+
+    /* Bento Visual Elements */
+    .bento-code {
+      background-color: hsl(0 0% 6%);
+      border: 1px solid hsl(var(--border));
+      border-radius: calc(var(--radius) - 2px);
+      padding: 1rem;
+      font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+      font-size: 0.75rem;
+      line-height: 1.6;
+      overflow: hidden;
+    }
+
+    .bento-code .line {
+      display: block;
+    }
+
+    .bento-code .line-num {
+      color: hsl(var(--muted-foreground) / 0.4);
+      user-select: none;
+      display: inline-block;
+      min-width: 1rem;
+      text-align: right;
+      margin-right: 0.75rem;
+    }
+
+    .bento-code .keyword { color: hsl(280 80% 70%); }
+    .bento-code .class { color: hsl(35 90% 65%); }
+    .bento-code .method { color: hsl(200 90% 70%); }
+    .bento-code .string { color: hsl(var(--success)); }
+    .bento-code .comment { color: hsl(var(--muted-foreground)); }
+    .bento-code .symbol { color: hsl(0 70% 65%); }
+    .bento-code .number { color: hsl(30 90% 60%); }
+
+    /* Mock Dashboard Card */
+    .bento-dashboard {
+      background-color: hsl(0 0% 6%);
+      border: 1px solid hsl(var(--border));
+      border-radius: calc(var(--radius) - 2px);
+      overflow: hidden;
+    }
+
+    .bento-dashboard-header {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.625rem 0.875rem;
+      border-bottom: 1px solid hsl(var(--border));
+      background-color: hsl(0 0% 8%);
+    }
+
+    .bento-dashboard-header .dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+    }
+
+    .bento-dashboard-header .dot.red { background: hsl(0 70% 50%); }
+    .bento-dashboard-header .dot.yellow { background: hsl(45 70% 50%); }
+    .bento-dashboard-header .dot.green { background: hsl(120 40% 45%); }
+
+    .bento-dashboard-content {
+      padding: 0.875rem;
+    }
+
+    /* Error List Mock */
+    .mock-error-list {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+
+    .mock-error-item {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      padding: 0.625rem 0.75rem;
+      background-color: hsl(0 0% 9%);
+      border-radius: calc(var(--radius) - 4px);
+      font-size: 0.75rem;
+    }
+
+    .mock-error-item .severity {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    .mock-error-item .severity.error { background: hsl(var(--error)); }
+    .mock-error-item .severity.warning { background: hsl(var(--warning)); }
+    .mock-error-item .severity.info { background: hsl(var(--info)); }
+
+    .mock-error-item .error-name {
+      font-family: ui-monospace, SFMono-Regular, monospace;
+      color: hsl(var(--foreground));
+      flex: 1;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .mock-error-item .error-count {
+      color: hsl(var(--muted-foreground));
+      font-size: 0.6875rem;
+      padding: 0.125rem 0.5rem;
+      background: hsl(var(--secondary));
+      border-radius: 9999px;
+    }
+
+    /* Performance Bars */
+    .perf-bars {
+      display: flex;
+      flex-direction: column;
+      gap: 0.625rem;
+    }
+
+    .perf-bar-row {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      font-size: 0.6875rem;
+    }
+
+    .perf-bar-label {
+      width: 5rem;
+      color: hsl(var(--muted-foreground));
+      text-align: right;
+      flex-shrink: 0;
+    }
+
+    .perf-bar-track {
+      flex: 1;
+      height: 6px;
+      background: hsl(var(--secondary));
+      border-radius: 3px;
+      overflow: hidden;
+    }
+
+    .perf-bar-fill {
+      height: 100%;
+      border-radius: 3px;
+      transition: width 0.3s ease;
+    }
+
+    .perf-bar-fill.db { background: hsl(var(--info)); width: 65%; }
+    .perf-bar-fill.view { background: hsl(var(--success)); width: 20%; }
+    .perf-bar-fill.ruby { background: hsl(280 70% 60%); width: 10%; }
+    .perf-bar-fill.other { background: hsl(var(--muted-foreground)); width: 5%; }
+
+    .perf-bar-time {
+      width: 3rem;
+      color: hsl(var(--foreground));
+      font-family: ui-monospace, SFMono-Regular, monospace;
+    }
+
+    /* Alert Icons Animation */
+    .alert-icons {
+      display: flex;
+      gap: 1rem;
+      justify-content: center;
+      padding: 1rem 0;
+    }
+
+    .alert-icon {
+      width: 3rem;
+      height: 3rem;
+      background: hsl(var(--secondary));
+      border: 1px solid hsl(var(--border));
+      border-radius: var(--radius);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.25rem;
+      transition: all 0.2s ease;
+    }
+
+    .bento-card:hover .alert-icon {
+      transform: scale(1.1);
+    }
+
+    .alert-icon.slack { background: hsl(280 30% 20%); border-color: hsl(280 40% 35%); }
+    .alert-icon.discord { background: hsl(235 50% 25%); border-color: hsl(235 50% 40%); }
+    .alert-icon.email { background: hsl(200 40% 20%); border-color: hsl(200 40% 35%); }
+    .alert-icon.webhook { background: hsl(150 30% 20%); border-color: hsl(150 30% 35%); }
+
+    /* Terminal Mock */
+    .bento-terminal {
+      background: hsl(0 0% 6%);
+      border: 1px solid hsl(var(--border));
+      border-radius: calc(var(--radius) - 2px);
+      overflow: hidden;
+    }
+
+    .bento-terminal-header {
+      display: flex;
+      align-items: center;
+      gap: 0.375rem;
+      padding: 0.5rem 0.75rem;
+      background: hsl(0 0% 8%);
+      border-bottom: 1px solid hsl(var(--border));
+    }
+
+    .bento-terminal-header span {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: hsl(var(--muted-foreground) / 0.3);
+    }
+
+    .bento-terminal-body {
+      padding: 0.875rem;
+      font-family: ui-monospace, SFMono-Regular, monospace;
+      font-size: 0.6875rem;
+      line-height: 1.7;
+    }
+
+    .bento-terminal-body .prompt { color: hsl(var(--success)); }
+    .bento-terminal-body .output { color: hsl(var(--muted-foreground)); }
+    .bento-terminal-body .success { color: hsl(var(--success)); }
+
+    /* Stats Grid */
+    .stats-mini {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 0.75rem;
+    }
+
+    .stat-mini-item {
+      background: hsl(0 0% 8%);
+      border-radius: calc(var(--radius) - 2px);
+      padding: 0.875rem;
+      text-align: center;
+    }
+
+    .stat-mini-item .value {
+      font-size: 1.5rem;
+      font-weight: 700;
+      font-family: ui-monospace, SFMono-Regular, monospace;
+      color: hsl(var(--foreground));
+    }
+
+    .stat-mini-item .value.green { color: hsl(var(--success)); }
+    .stat-mini-item .value.blue { color: hsl(var(--info)); }
+
+    .stat-mini-item .label {
+      font-size: 0.6875rem;
+      color: hsl(var(--muted-foreground));
+      margin-top: 0.25rem;
+    }
+
+    /* Privacy Shield */
+    .privacy-visual {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 1rem;
+      padding: 1rem 0;
+    }
+
+    .server-icon {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.375rem;
+    }
+
+    .server-icon .icon {
+      width: 3rem;
+      height: 3rem;
+      background: hsl(var(--secondary));
+      border: 1px solid hsl(var(--border));
+      border-radius: var(--radius);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.25rem;
+    }
+
+    .server-icon .label {
+      font-size: 0.625rem;
+      color: hsl(var(--muted-foreground));
+    }
+
+    .data-flow {
+      display: flex;
+      align-items: center;
+      gap: 0.25rem;
+      color: hsl(var(--success));
+      font-size: 0.75rem;
+    }
+
+    .data-flow span {
+      animation: pulse 1.5s ease-in-out infinite;
+    }
+
+    .data-flow span:nth-child(2) { animation-delay: 0.2s; }
+    .data-flow span:nth-child(3) { animation-delay: 0.4s; }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 0.3; }
+      50% { opacity: 1; }
+    }
+
+    /* Demo Section - Matching Real FindBug Dashboard 1:1 */
+    .demo {
+      padding: 5rem 0;
+      background: hsl(0 0% 2%);
+    }
+
+    .demo-container {
+      max-width: 1100px;
+      margin: 0 auto;
+    }
+
+    .demo-window {
+      background: hsl(var(--background));
+      border: 1px solid hsl(var(--border));
+      border-radius: var(--radius);
+      overflow: hidden;
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+    }
+
+    .demo-titlebar {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.75rem 1rem;
+      background: hsl(0 0% 8%);
+      border-bottom: 1px solid hsl(var(--border));
+    }
+
+    .demo-titlebar .dots {
+      display: flex;
+      gap: 0.375rem;
+    }
+
+    .demo-titlebar .dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+    }
+
+    .demo-titlebar .dot.red { background: #ff5f57; }
+    .demo-titlebar .dot.yellow { background: #febc2e; }
+    .demo-titlebar .dot.green { background: #28c840; }
+
+    .demo-titlebar .url {
+      flex: 1;
+      text-align: center;
+      font-size: 0.75rem;
+      color: hsl(var(--muted-foreground));
+      font-family: ui-monospace, monospace;
+    }
+
+    /* Dashboard Header - matches real Findbug header */
+    .demo-app-header {
+      display: flex;
+      align-items: center;
+      height: 3.5rem;
+      padding: 0 1.5rem;
+      gap: 1.5rem;
+      background: hsl(var(--background));
+      border-bottom: 1px solid hsl(var(--border));
+    }
+
+    .demo-app-logo {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 0.875rem;
+      font-weight: 600;
+      color: hsl(var(--foreground));
+      padding-right: 1rem;
+      border-right: 1px solid hsl(var(--border));
+    }
+
+    .demo-app-logo svg {
+      width: 1.25rem;
+      height: 1.25rem;
+    }
+
+    .demo-app-nav {
+      display: flex;
+      align-items: center;
+      gap: 0.125rem;
+    }
+
+    .demo-app-nav a {
+      padding: 0.375rem 0.75rem;
+      font-size: 0.875rem;
+      font-weight: 500;
+      color: hsl(var(--muted-foreground));
+      border-radius: var(--radius);
+      transition: all 0.15s;
+      cursor: pointer;
+    }
+
+    .demo-app-nav a:hover {
+      color: hsl(var(--foreground));
+    }
+
+    .demo-app-nav a.active {
+      color: hsl(var(--foreground));
+      background-color: hsl(var(--accent));
+    }
+
+    .demo-header-right {
+      margin-left: auto;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .demo-health-indicator {
+      display: flex;
+      align-items: center;
+      gap: 0.375rem;
+      font-size: 0.75rem;
+      color: hsl(var(--muted-foreground));
+      padding: 0.25rem 0.625rem;
+      background-color: hsl(var(--secondary));
+      border-radius: var(--radius);
+    }
+
+    .demo-health-dot {
+      width: 0.5rem;
+      height: 0.5rem;
+      border-radius: 50%;
+      background-color: hsl(var(--success));
+    }
+
+    /* Dashboard Main Content */
+    .demo-main {
+      padding: 2.5rem 1.5rem 3rem;
+    }
+
+    .demo-page-title {
+      font-size: 1.875rem;
+      font-weight: 700;
+      letter-spacing: -0.025em;
+      margin-bottom: 0.5rem;
+    }
+
+    .demo-page-description {
+      color: hsl(var(--muted-foreground));
+      font-size: 0.875rem;
+      margin-bottom: 1.5rem;
+    }
+
+    /* Stats Grid - matches real dashboard */
+    .demo-stats-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 1rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .demo-stat-card {
+      background-color: hsl(var(--card));
+      border: 1px solid hsl(var(--border));
+      border-radius: var(--radius);
+      padding: 1.25rem;
+    }
+
+    .demo-stat-label {
+      font-size: 0.75rem;
+      font-weight: 500;
+      color: hsl(var(--muted-foreground));
+    }
+
+    .demo-stat-value {
+      font-size: 2rem;
+      font-weight: 700;
+      letter-spacing: -0.025em;
+      margin-top: 0.25rem;
+      line-height: 1;
+    }
+
+    .demo-stat-value.error { color: hsl(var(--error)); }
+    .demo-stat-value.warning { color: hsl(var(--warning)); }
+    .demo-stat-value.success { color: hsl(var(--success)); }
+
+    .demo-stat-value .unit {
+      font-size: 0.875rem;
+      color: hsl(var(--muted-foreground));
+      font-weight: 400;
+    }
+
+    .demo-stat-change {
+      font-size: 0.75rem;
+      margin-top: 0.5rem;
+      color: hsl(var(--muted-foreground));
+    }
+
+    /* Two Column Grid */
+    .demo-grid-2 {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 1.5rem;
+      margin-bottom: 1.5rem;
+    }
+
+    /* Card Component - matches real dashboard */
+    .demo-card {
+      background-color: hsl(var(--card));
+      border: 1px solid hsl(var(--border));
+      border-radius: var(--radius);
+    }
+
+    .demo-card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 1rem 1.25rem;
+      border-bottom: 1px solid hsl(var(--border));
+    }
+
+    .demo-card-title {
+      font-size: 0.875rem;
+      font-weight: 600;
+    }
+
+    .demo-card-description {
+      font-size: 0.75rem;
+      color: hsl(var(--muted-foreground));
+      margin-top: 0.125rem;
+    }
+
+    .demo-btn-outline {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0.25rem 0.625rem;
+      font-size: 0.75rem;
+      font-weight: 500;
+      height: 1.75rem;
+      background: transparent;
+      color: hsl(var(--foreground));
+      border: 1px solid hsl(var(--border));
+      border-radius: var(--radius);
+      cursor: pointer;
+    }
+
+    /* Table - matches real dashboard */
+    .demo-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.875rem;
+    }
+
+    .demo-table th {
+      padding: 0.75rem 1rem;
+      text-align: left;
+      font-weight: 500;
+      font-size: 0.75rem;
+      color: hsl(var(--muted-foreground));
+      border-bottom: 1px solid hsl(var(--border));
+    }
+
+    .demo-table td {
+      padding: 0.75rem 1rem;
+      border-bottom: 1px solid hsl(var(--border));
+      vertical-align: middle;
+    }
+
+    .demo-table tbody tr {
+      transition: background-color 0.15s;
+    }
+
+    .demo-table tbody tr:hover {
+      background-color: hsl(var(--muted) / 0.5);
+    }
+
+    .demo-table tbody tr:last-child td {
+      border-bottom: none;
+    }
+
+    .demo-table a {
+      color: hsl(var(--foreground));
+    }
+
+    .demo-table a:hover {
+      text-decoration: underline;
+    }
+
+    .demo-font-mono {
+      font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+    }
+
+    .demo-text-muted {
+      color: hsl(var(--muted-foreground));
+    }
+
+    .demo-text-sm {
+      font-size: 0.875rem;
+    }
+
+    .demo-text-xs {
+      font-size: 0.75rem;
+    }
+
+    /* Badges - matches real dashboard */
+    .demo-badge {
+      display: inline-flex;
+      align-items: center;
+      padding: 0.125rem 0.5rem;
+      font-size: 0.6875rem;
+      font-weight: 500;
+      border-radius: 9999px;
+    }
+
+    .demo-badge-error {
+      background-color: hsl(var(--error) / 0.15);
+      color: hsl(var(--error));
+    }
+
+    .demo-badge-warning {
+      background-color: hsl(var(--warning) / 0.15);
+      color: hsl(var(--warning));
+    }
+
+    .demo-badge-success {
+      background-color: hsl(var(--success) / 0.15);
+      color: hsl(var(--success));
+    }
+
+    .demo-badge-muted {
+      background-color: hsl(var(--muted));
+      color: hsl(var(--muted-foreground));
+    }
+
+    @media (max-width: 1024px) {
+      .demo-stats-grid { grid-template-columns: repeat(2, 1fr); }
+      .demo-grid-2 { grid-template-columns: 1fr; }
+    }
+
+    @media (max-width: 640px) {
+      .demo-stats-grid { grid-template-columns: 1fr; }
+      .demo-app-nav { display: none; }
+    }
+
+    /* Comparison Section - Modern Card Layout */
+    .comparison {
+      padding: 5rem 0;
+    }
+
+    .comparison-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 1.5rem;
+      max-width: 900px;
+      margin: 0 auto;
+    }
+
+    @media (max-width: 768px) {
+      .comparison-grid { grid-template-columns: 1fr; }
+    }
+
+    .comparison-card {
+      background-color: hsl(var(--card));
+      border: 1px solid hsl(var(--border));
+      border-radius: var(--radius);
+      padding: 1.5rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+
+    .comparison-card-header {
+      display: flex;
+      align-items: flex-start;
+      gap: 1rem;
+    }
+
+    .comparison-icon {
+      width: 2.5rem;
+      height: 2.5rem;
+      border-radius: var(--radius);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .comparison-icon svg {
+      width: 1.25rem;
+      height: 1.25rem;
+    }
+
+    .comparison-icon.green {
+      background-color: hsl(var(--success) / 0.15);
+      color: hsl(var(--success));
+    }
+
+    .comparison-icon.blue {
+      background-color: hsl(var(--info) / 0.15);
+      color: hsl(var(--info));
+    }
+
+    .comparison-icon.orange {
+      background-color: hsl(var(--warning) / 0.15);
+      color: hsl(var(--warning));
+    }
+
+    .comparison-icon.purple {
+      background-color: hsl(280 60% 50% / 0.15);
+      color: hsl(280 60% 65%);
+    }
+
+    .comparison-card-title {
+      font-size: 1rem;
+      font-weight: 600;
+      margin-bottom: 0.25rem;
+    }
+
+    .comparison-card-desc {
+      font-size: 0.875rem;
+      color: hsl(var(--muted-foreground));
+      line-height: 1.5;
+    }
+
+    .comparison-items {
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+      padding-top: 0.5rem;
+      border-top: 1px solid hsl(var(--border));
+    }
+
+    .comparison-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 0.8125rem;
+    }
+
+    .comparison-item-label {
+      color: hsl(var(--muted-foreground));
+    }
+
+    .comparison-item-values {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .comparison-item-other {
+      color: hsl(var(--muted-foreground));
+      font-size: 0.75rem;
+      text-decoration: line-through;
+      opacity: 0.7;
+    }
+
+    .comparison-item-findbug {
+      color: hsl(var(--success));
+      font-weight: 500;
+      display: flex;
+      align-items: center;
+      gap: 0.375rem;
+    }
+
+    .comparison-item-findbug svg {
+      width: 0.875rem;
+      height: 0.875rem;
+    }
+
+    /* Full Width Comparison Card */
+    .comparison-card.full-width {
+      grid-column: span 2;
+    }
+
+    @media (max-width: 768px) {
+      .comparison-card.full-width { grid-column: span 1; }
+    }
+
+    .comparison-highlight {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 3rem;
+      padding: 1.5rem;
+      background: linear-gradient(135deg, hsl(var(--success) / 0.08) 0%, hsl(var(--info) / 0.08) 100%);
+      border-radius: calc(var(--radius) - 4px);
+      flex-wrap: wrap;
+    }
+
+    .comparison-highlight-item {
+      text-align: center;
+    }
+
+    .comparison-highlight-value {
+      font-size: 2rem;
+      font-weight: 700;
+      letter-spacing: -0.025em;
+      color: hsl(var(--foreground));
+    }
+
+    .comparison-highlight-label {
+      font-size: 0.75rem;
+      color: hsl(var(--muted-foreground));
+      margin-top: 0.25rem;
+    }
+
+    /* Quick Start Section */
+    .quickstart {
+      padding: 5rem 0;
+      background: hsl(0 0% 2%);
+    }
+
+    .quickstart-container {
+      max-width: 700px;
+      margin: 0 auto;
+    }
+
+    .quickstart-steps {
+      display: flex;
+      flex-direction: column;
+      gap: 1.5rem;
+    }
+
+    .quickstart-step {
+      display: flex;
+      gap: 1.25rem;
+      align-items: flex-start;
+    }
+
+    .step-number {
+      width: 2rem;
+      height: 2rem;
+      background-color: hsl(var(--secondary));
+      border: 1px solid hsl(var(--border));
+      color: hsl(var(--foreground));
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 600;
+      font-size: 0.8125rem;
+      flex-shrink: 0;
+    }
+
+    .step-content {
+      flex: 1;
+    }
+
+    .step-content h3 {
+      font-size: 0.9375rem;
+      font-weight: 600;
+      margin-bottom: 0.625rem;
+    }
+
+    .code-block {
+      background-color: hsl(0 0% 7%);
+      border: 1px solid hsl(var(--border));
+      border-radius: var(--radius);
+      padding: 1rem 1.25rem;
+      font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+      font-size: 0.8125rem;
+      line-height: 1.6;
+      overflow-x: auto;
+    }
+
+    .code-block .prompt {
+      color: hsl(var(--success));
+      user-select: none;
+    }
+
+    .code-block .comment {
+      color: hsl(var(--muted-foreground));
+    }
+
+    /* Architecture Section - Modern Flow Diagram */
+    .architecture {
+      padding: 5rem 0;
+    }
+
+    .architecture-container {
+      max-width: 1000px;
+      margin: 0 auto;
+    }
+
+    /* Flow Diagram */
+    .flow-diagram {
+      display: flex;
+      flex-direction: column;
+      gap: 2rem;
+      padding: 2rem;
+      background: linear-gradient(180deg, hsl(var(--card)) 0%, hsl(0 0% 5%) 100%);
+      border: 1px solid hsl(var(--border));
+      border-radius: var(--radius);
+      position: relative;
+      overflow: hidden;
+    }
+
+
+    /* Flow Row */
+    .flow-row {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 1rem;
+      position: relative;
+      z-index: 1;
+    }
+
+    .flow-row.split {
+      display: grid;
+      grid-template-columns: 1fr auto 1fr;
+      gap: 1.5rem;
+    }
+
+    /* Flow Nodes */
+    .flow-node {
+      background: hsl(var(--card));
+      border: 1px solid hsl(var(--border));
+      border-radius: var(--radius);
+      padding: 1rem 1.25rem;
+      text-align: center;
+      min-width: 140px;
+      transition: all 0.2s ease;
+    }
+
+    .flow-node:hover {
+      border-color: hsl(var(--muted-foreground) / 0.5);
+      transform: translateY(-2px);
+    }
+
+    .flow-node.primary {
+      background: linear-gradient(135deg, hsl(var(--info) / 0.15) 0%, hsl(var(--info) / 0.05) 100%);
+      border-color: hsl(var(--info) / 0.3);
+    }
+
+    .flow-node.success {
+      background: linear-gradient(135deg, hsl(var(--success) / 0.15) 0%, hsl(var(--success) / 0.05) 100%);
+      border-color: hsl(var(--success) / 0.3);
+    }
+
+    .flow-node.warning {
+      background: linear-gradient(135deg, hsl(var(--warning) / 0.15) 0%, hsl(var(--warning) / 0.05) 100%);
+      border-color: hsl(var(--warning) / 0.3);
+    }
+
+    .flow-node.highlight {
+      background: linear-gradient(135deg, hsl(280 60% 50% / 0.15) 0%, hsl(280 60% 50% / 0.05) 100%);
+      border-color: hsl(280 60% 50% / 0.3);
+    }
+
+    .flow-node-icon {
+      width: 2.5rem;
+      height: 2.5rem;
+      margin: 0 auto 0.625rem;
+      background: hsl(var(--secondary));
+      border-radius: var(--radius);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .flow-node-icon svg {
+      width: 1.25rem;
+      height: 1.25rem;
+      color: hsl(var(--foreground));
+    }
+
+    .flow-node-icon.blue { background: hsl(var(--info) / 0.2); }
+    .flow-node-icon.blue svg { color: hsl(var(--info)); }
+    .flow-node-icon.green { background: hsl(var(--success) / 0.2); }
+    .flow-node-icon.green svg { color: hsl(var(--success)); }
+    .flow-node-icon.orange { background: hsl(var(--warning) / 0.2); }
+    .flow-node-icon.orange svg { color: hsl(var(--warning)); }
+    .flow-node-icon.purple { background: hsl(280 60% 50% / 0.2); }
+    .flow-node-icon.purple svg { color: hsl(280 60% 65%); }
+
+    .flow-node-title {
+      font-size: 0.8125rem;
+      font-weight: 600;
+      margin-bottom: 0.25rem;
+    }
+
+    .flow-node-desc {
+      font-size: 0.6875rem;
+      color: hsl(var(--muted-foreground));
+    }
+
+    .flow-node-badge {
+      display: inline-flex;
+      padding: 0.125rem 0.5rem;
+      font-size: 0.625rem;
+      font-weight: 500;
+      border-radius: 9999px;
+      margin-top: 0.5rem;
+      background: hsl(var(--success) / 0.15);
+      color: hsl(var(--success));
+    }
+
+    /* Flow Arrows */
+    .flow-arrow {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: hsl(var(--muted-foreground));
+    }
+
+    .flow-arrow svg {
+      width: 1.5rem;
+      height: 1.5rem;
+    }
+
+    .flow-arrow.vertical {
+      padding: 0.5rem 0;
+    }
+
+    .flow-arrow.vertical svg {
+      transform: rotate(90deg);
+      animation: arrowPulseDown 2s ease-in-out infinite;
+    }
+
+    @keyframes arrowPulseDown {
+      0%, 100% {
+        opacity: 0.4;
+        transform: rotate(90deg) translateX(0);
+      }
+      50% {
+        opacity: 1;
+        transform: rotate(90deg) translateX(4px);
+      }
+    }
+
+    /* Flow Center Column */
+    .flow-center {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    /* Flow Side Nodes */
+    .flow-side {
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+    }
+
+    .flow-side.left {
+      align-items: flex-end;
+    }
+
+    .flow-side.right {
+      align-items: flex-start;
+    }
+
+    .flow-mini-node {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.5rem 0.75rem;
+      background: hsl(var(--secondary));
+      border: 1px solid hsl(var(--border));
+      border-radius: var(--radius);
+      font-size: 0.75rem;
+    }
+
+    .flow-mini-node svg {
+      width: 0.875rem;
+      height: 0.875rem;
+      color: hsl(var(--muted-foreground));
+    }
+
+    /* Architecture Stats */
+    .architecture-stats {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 1rem;
+      margin-top: 2rem;
+    }
+
+    .arch-stat {
+      background: hsl(var(--card));
+      border: 1px solid hsl(var(--border));
+      border-radius: var(--radius);
+      padding: 1rem;
+      text-align: center;
+      transition: all 0.2s ease;
+    }
+
+    .arch-stat:hover {
+      border-color: hsl(var(--success) / 0.5);
+    }
+
+    .arch-stat-icon {
+      width: 2rem;
+      height: 2rem;
+      margin: 0 auto 0.5rem;
+      background: hsl(var(--success) / 0.15);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .arch-stat-icon svg {
+      width: 1rem;
+      height: 1rem;
+      color: hsl(var(--success));
+    }
+
+    .arch-stat-value {
+      font-size: 1.125rem;
+      font-weight: 700;
+      margin-bottom: 0.125rem;
+    }
+
+    .arch-stat-label {
+      font-size: 0.6875rem;
+      color: hsl(var(--muted-foreground));
+    }
+
+    @media (max-width: 768px) {
+      .architecture-stats { grid-template-columns: repeat(2, 1fr); }
+      .flow-row.split { grid-template-columns: 1fr; gap: 1rem; }
+      .flow-side { flex-direction: row; flex-wrap: wrap; justify-content: center; }
+      .flow-side.left, .flow-side.right { align-items: center; }
+      .flow-diagram::before { display: none; }
+    }
+
+    /* CTA Section */
+    .cta {
+      padding: 5rem 0;
+      text-align: center;
+    }
+
+    .cta h2 {
+      font-size: 1.875rem;
+      font-weight: 700;
+      letter-spacing: -0.025em;
+      margin-bottom: 0.75rem;
+    }
+
+    .cta p {
+      font-size: 1rem;
+      color: hsl(var(--muted-foreground));
+      margin-bottom: 1.5rem;
+      max-width: 400px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+
+    /* Footer */
+    footer {
+      padding: 2rem 0;
+      text-align: center;
+    }
+
+    .footer-links {
+      display: flex;
+      justify-content: center;
+      gap: 1.5rem;
+      margin-bottom: 1rem;
+      flex-wrap: wrap;
+    }
+
+    .footer-links a {
+      color: hsl(var(--muted-foreground));
+      font-size: 0.875rem;
+      transition: color 0.15s;
+    }
+
+    .footer-links a:hover {
+      color: hsl(var(--foreground));
+    }
+
+    .footer-copyright {
+      font-size: 0.8125rem;
+      color: hsl(var(--muted-foreground));
+    }
+
+    .footer-copyright a {
+      color: hsl(var(--foreground));
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      h1 { font-size: 2.25rem; }
+      .hero { padding: 6rem 0 4rem; }
+      .nav-links { display: none; }
+      .quickstart-step { flex-direction: column; gap: 0.75rem; }
+    }
+  </style>
+</head>
+<body>
+  <!-- Navigation -->
+  <nav class="site-nav">
+    <div class="nav-container">
+      <a href="#" class="logo">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M8 2l1.88 1.88"/>
+          <path d="M14.12 3.88L16 2"/>
+          <path d="M9 7.13v-1a3.003 3.003 0 1 1 6 0v1"/>
+          <path d="M12 20c-3.3 0-6-2.7-6-6v-3a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v3c0 3.3-2.7 6-6 6"/>
+          <path d="M12 20v-9"/>
+          <path d="M6.53 9C4.6 8.8 3 7.1 3 5"/>
+          <path d="M6 13H2"/>
+          <path d="M3 21c0-2.1 1.7-3.9 3.8-4"/>
+          <path d="M20.97 5c0 2.1-1.6 3.8-3.5 4"/>
+          <path d="M22 13h-4"/>
+          <path d="M17.2 17c2.1.1 3.8 1.9 3.8 4"/>
+        </svg>
+        <span>FindBug</span>
+      </a>
+      <div class="nav-links">
+        <a href="#features">Features</a>
+        <a href="#comparison">Compare</a>
+        <a href="#architecture">Architecture</a>
+        <a href="#demo">Demo</a>
+      </div>
+      <div class="nav-right">
+        <a href="#demo" class="btn btn-primary btn-sm">
+          Dashboard Demo
+        </a>
+        <a href="https://github.com/ITSSOUMIT/findbug" target="_blank" class="btn btn-outline btn-sm">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
+          GitHub
+        </a>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Hero Section -->
+  <section class="hero">
+    <div class="container">
+      <div class="hero-badge">
+        <span>NEW</span>
+        v0.3.4 released with multi-tenant support
+      </div>
+      <h1>Catch bugs<br>before your users do</h1>
+      <p>
+        Self-hosted error tracking for Rails.<br>One gem. Zero SaaS. Full control.
+      </p>
+      <div class="hero-buttons">
+        <!-- <a href="#quickstart" class="btn btn-primary">
+          Get Started
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+        </a> -->
+        <a href="https://github.com/ITSSOUMIT/findbug" target="_blank" class="btn btn-secondary">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
+          View on GitHub
+        </a>
+      </div>
+      <div class="hero-code">
+        <span class="comment"># Add to your Gemfile:</span><br>
+        <span class="keyword">gem</span> <span class="string">"findbug", "~> 0.3.4"</span><br><br>
+        <span class="comment"># Install and you're done!</span><br>
+        $ rails generate findbug:install<br>
+        $ rails db:migrate<br><br>
+        <span class="comment"># Access the dashboard</span><br>
+        http://localhost:3010/findbug<br><br>
+        <span class="comment"># Default credentials:</span><br>
+        <span class="comment"># Username: admin</span><br>
+        <span class="comment"># Password: findbug</span><br>
+      </div>
+    </div>
+  </section>
+
+  <!-- Features Section -->
+  <section class="features" id="features">
+    <div class="container">
+      <div class="section-header">
+        <h2>Everything you need to track errors</h2>
+        <p>Production-ready error tracking and performance monitoring without the complexity or cost.</p>
+      </div>
+      <div class="bento-grid">
+        <!-- Error Tracking - Wide Card with Code Snippet -->
+        <div class="bento-card bento-wide">
+          <h3>Error Tracking</h3>
+          <p>Capture exceptions with full stack traces, request data, and custom context. Automatic grouping of similar errors.</p>
+          <div class="visual">
+            <div class="bento-code">
+              <div class="line"><span class="line-num">1</span><span class="keyword">class</span> <span class="class">OrdersController</span> &lt; <span class="class">ApplicationController</span></div>
+              <div class="line"><span class="line-num">2</span>&nbsp;&nbsp;<span class="keyword">def</span> <span class="method">create</span></div>
+              <div class="line"><span class="line-num">3</span>&nbsp;&nbsp;&nbsp;&nbsp;@order = <span class="class">Order</span>.<span class="method">new</span>(order_params)</div>
+              <div class="line" style="background: hsl(0 50% 15% / 0.5); margin: 0 -1rem; padding: 0 1rem;"><span class="line-num">4</span>&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">raise</span> <span class="class">PaymentError</span>, <span class="string">"Card declined"</span> <span class="comment"># FindBug captures this</span></div>
+              <div class="line"><span class="line-num">5</span>&nbsp;&nbsp;<span class="keyword">end</span></div>
+              <div class="line"><span class="line-num">6</span><span class="keyword">end</span></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Performance Stats - Narrow Card -->
+        <div class="bento-card bento-narrow">
+          <h3>Zero Impact</h3>
+          <p>Async writes via Redis buffer. Never blocks your requests.</p>
+          <div class="visual">
+            <div class="stats-mini">
+              <div class="stat-mini-item">
+                <div class="value green">~1ms</div>
+                <div class="label">Capture time</div>
+              </div>
+              <div class="stat-mini-item">
+                <div class="value blue">0%</div>
+                <div class="label">Request blocking</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Self-Hosted - Narrow Card with Privacy Visual -->
+        <div class="bento-card bento-narrow">
+          <h3>Self-Hosted</h3>
+          <p>Your data stays on your infrastructure. Full privacy.</p>
+          <div class="visual">
+            <div class="privacy-visual">
+              <div class="server-icon">
+                <div class="icon">🌐</div>
+                <span class="label">Your App</span>
+              </div>
+              <div class="data-flow">
+                <span>→</span>
+                <span>→</span>
+                <span>→</span>
+              </div>
+              <div class="server-icon">
+                <div class="icon">🗄️</div>
+                <span class="label">Your DB</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Performance Monitoring - Wide Card with Bars -->
+        <div class="bento-card bento-wide">
+          <h3>Performance Monitoring</h3>
+          <p>Track request timing, SQL queries, and automatic N+1 detection. Know exactly what's slowing your app down.</p>
+          <div class="visual">
+            <div class="perf-bars">
+              <div class="perf-bar-row">
+                <span class="perf-bar-label">Database</span>
+                <div class="perf-bar-track"><div class="perf-bar-fill db"></div></div>
+                <span class="perf-bar-time">156ms</span>
+              </div>
+              <div class="perf-bar-row">
+                <span class="perf-bar-label">View</span>
+                <div class="perf-bar-track"><div class="perf-bar-fill view"></div></div>
+                <span class="perf-bar-time">48ms</span>
+              </div>
+              <div class="perf-bar-row">
+                <span class="perf-bar-label">Ruby</span>
+                <div class="perf-bar-track"><div class="perf-bar-fill ruby"></div></div>
+                <span class="perf-bar-time">24ms</span>
+              </div>
+              <div class="perf-bar-row">
+                <span class="perf-bar-label">Other</span>
+                <div class="perf-bar-track"><div class="perf-bar-fill other"></div></div>
+                <span class="perf-bar-time">12ms</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Dashboard - Half Card with Mock UI -->
+        <div class="bento-card bento-half">
+          <h3>Built-in Dashboard</h3>
+          <p>Beautiful web UI for viewing errors and performance metrics.</p>
+          <div class="visual">
+            <div class="bento-dashboard">
+              <div class="bento-dashboard-header">
+                <span class="dot red"></span>
+                <span class="dot yellow"></span>
+                <span class="dot green"></span>
+              </div>
+              <div class="bento-dashboard-content">
+                <div class="mock-error-list">
+                  <div class="mock-error-item">
+                    <span class="severity error"></span>
+                    <span class="error-name">PaymentError: Card declined</span>
+                    <span class="error-count">142</span>
+                  </div>
+                  <div class="mock-error-item">
+                    <span class="severity warning"></span>
+                    <span class="error-name">TimeoutError: Request timed out</span>
+                    <span class="error-count">38</span>
+                  </div>
+                  <div class="mock-error-item">
+                    <span class="severity info"></span>
+                    <span class="error-name">ValidationError: Email invalid</span>
+                    <span class="error-count">12</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Alerts - Half Card with Icons -->
+        <div class="bento-card bento-half">
+          <h3>Multi-channel Alerts</h3>
+          <p>Get notified via Email, Slack, Discord, or custom webhooks.</p>
+          <div class="visual">
+            <div class="alert-icons">
+              <div class="alert-icon slack">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M5.042 15.165a2.528 2.528 0 0 1-2.52 2.523A2.528 2.528 0 0 1 0 15.165a2.527 2.527 0 0 1 2.522-2.52h2.52v2.52zM6.313 15.165a2.527 2.527 0 0 1 2.521-2.52 2.527 2.527 0 0 1 2.521 2.52v6.313A2.528 2.528 0 0 1 8.834 24a2.528 2.528 0 0 1-2.521-2.522v-6.313zM8.834 5.042a2.528 2.528 0 0 1-2.521-2.52A2.528 2.528 0 0 1 8.834 0a2.528 2.528 0 0 1 2.521 2.522v2.52H8.834zM8.834 6.313a2.528 2.528 0 0 1 2.521 2.521 2.528 2.528 0 0 1-2.521 2.521H2.522A2.528 2.528 0 0 1 0 8.834a2.528 2.528 0 0 1 2.522-2.521h6.312zM18.956 8.834a2.528 2.528 0 0 1 2.522-2.521A2.528 2.528 0 0 1 24 8.834a2.528 2.528 0 0 1-2.522 2.521h-2.522V8.834zM17.688 8.834a2.528 2.528 0 0 1-2.523 2.521 2.527 2.527 0 0 1-2.52-2.521V2.522A2.527 2.527 0 0 1 15.165 0a2.528 2.528 0 0 1 2.523 2.522v6.312zM15.165 18.956a2.528 2.528 0 0 1 2.523 2.522A2.528 2.528 0 0 1 15.165 24a2.527 2.527 0 0 1-2.52-2.522v-2.522h2.52zM15.165 17.688a2.527 2.527 0 0 1-2.52-2.523 2.526 2.526 0 0 1 2.52-2.52h6.313A2.527 2.527 0 0 1 24 15.165a2.528 2.528 0 0 1-2.522 2.523h-6.313z"/></svg>
+              </div>
+              <div class="alert-icon discord">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M20.317 4.3698a19.7913 19.7913 0 00-4.8851-1.5152.0741.0741 0 00-.0785.0371c-.211.3753-.4447.8648-.6083 1.2495-1.8447-.2762-3.68-.2762-5.4868 0-.1636-.3933-.4058-.8742-.6177-1.2495a.077.077 0 00-.0785-.037 19.7363 19.7363 0 00-4.8852 1.515.0699.0699 0 00-.0321.0277C.5334 9.0458-.319 13.5799.0992 18.0578a.0824.0824 0 00.0312.0561c2.0528 1.5076 4.0413 2.4228 5.9929 3.0294a.0777.0777 0 00.0842-.0276c.4616-.6304.8731-1.2952 1.226-1.9942a.076.076 0 00-.0416-.1057c-.6528-.2476-1.2743-.5495-1.8722-.8923a.077.077 0 01-.0076-.1277c.1258-.0943.2517-.1923.3718-.2914a.0743.0743 0 01.0776-.0105c3.9278 1.7933 8.18 1.7933 12.0614 0a.0739.0739 0 01.0785.0095c.1202.099.246.1981.3728.2924a.077.077 0 01-.0066.1276 12.2986 12.2986 0 01-1.873.8914.0766.0766 0 00-.0407.1067c.3604.698.7719 1.3628 1.225 1.9932a.076.076 0 00.0842.0286c1.961-.6067 3.9495-1.5219 6.0023-3.0294a.077.077 0 00.0313-.0552c.5004-5.177-.8382-9.6739-3.5485-13.6604a.061.061 0 00-.0312-.0286zM8.02 15.3312c-1.1825 0-2.1569-1.0857-2.1569-2.419 0-1.3332.9555-2.4189 2.157-2.4189 1.2108 0 2.1757 1.0952 2.1568 2.419 0 1.3332-.9555 2.4189-2.1569 2.4189zm7.9748 0c-1.1825 0-2.1569-1.0857-2.1569-2.419 0-1.3332.9554-2.4189 2.1569-2.4189 1.2108 0 2.1757 1.0952 2.1568 2.419 0 1.3332-.946 2.4189-2.1568 2.4189Z"/></svg>
+              </div>
+              <div class="alert-icon email">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>
+              </div>
+              <div class="alert-icon webhook">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 16.98h-5.99c-1.1 0-1.95.94-2.48 1.9A4 4 0 0 1 2 17c.01-.7.2-1.4.57-2"/><path d="m6 17 3.13-5.78c.53-.97.1-2.18-.5-3.1a4 4 0 1 1 6.89-4.06"/><path d="m12 6 3.13 5.73C15.66 12.7 16.9 13 18 13a4 4 0 0 1 0 8H12"/></svg>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Comparison Section - Problem Statement (Why existing solutions are painful) -->
+  <section class="comparison" id="comparison">
+    <div class="container">
+      <div class="section-header">
+        <h2>Why choose FindBug?</h2>
+        <p>Self-hosted means you own everything. Here's what that unlocks.</p>
+      </div>
+      <div class="comparison-grid">
+        <!-- Cost Card -->
+        <div class="comparison-card">
+          <div class="comparison-card-header">
+            <div class="comparison-icon green">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+            </div>
+            <div>
+              <h3 class="comparison-card-title">Zero Cost</h3>
+              <p class="comparison-card-desc">No per-seat pricing, no usage limits, no surprise bills.</p>
+            </div>
+          </div>
+          <div class="comparison-items">
+            <div class="comparison-item">
+              <span class="comparison-item-label">Monthly cost</span>
+              <div class="comparison-item-values">
+                <span class="comparison-item-other">$26+/seat</span>
+                <span class="comparison-item-findbug">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+                  Free forever
+                </span>
+              </div>
+            </div>
+            <div class="comparison-item">
+              <span class="comparison-item-label">Team size limits</span>
+              <div class="comparison-item-values">
+                <span class="comparison-item-other">Pay per user</span>
+                <span class="comparison-item-findbug">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+                  Unlimited
+                </span>
+              </div>
+            </div>
+            <div class="comparison-item">
+              <span class="comparison-item-label">Event quotas</span>
+              <div class="comparison-item-values">
+                <span class="comparison-item-other">Tier limits</span>
+                <span class="comparison-item-findbug">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+                  No limits
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Privacy Card -->
+        <div class="comparison-card">
+          <div class="comparison-card-header">
+            <div class="comparison-icon blue">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+            </div>
+            <div>
+              <h3 class="comparison-card-title">Full Data Ownership</h3>
+              <p class="comparison-card-desc">Your error data never leaves your infrastructure.</p>
+            </div>
+          </div>
+          <div class="comparison-items">
+            <div class="comparison-item">
+              <span class="comparison-item-label">Data location</span>
+              <div class="comparison-item-values">
+                <span class="comparison-item-other">Third-party</span>
+                <span class="comparison-item-findbug">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+                  Your servers
+                </span>
+              </div>
+            </div>
+            <div class="comparison-item">
+              <span class="comparison-item-label">GDPR/HIPAA</span>
+              <div class="comparison-item-values">
+                <span class="comparison-item-other">Requires DPA</span>
+                <span class="comparison-item-findbug">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+                  Built-in
+                </span>
+              </div>
+            </div>
+            <div class="comparison-item">
+              <span class="comparison-item-label">Data retention</span>
+              <div class="comparison-item-values">
+                <span class="comparison-item-other">Plan limits</span>
+                <span class="comparison-item-findbug">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+                  You decide
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Simplicity Card -->
+        <div class="comparison-card">
+          <div class="comparison-card-header">
+            <div class="comparison-icon orange">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+            </div>
+            <div>
+              <h3 class="comparison-card-title">Dead Simple Setup</h3>
+              <p class="comparison-card-desc">One gem, one command. No SDK configuration hell.</p>
+            </div>
+          </div>
+          <div class="comparison-items">
+            <div class="comparison-item">
+              <span class="comparison-item-label">Installation</span>
+              <div class="comparison-item-values">
+                <span class="comparison-item-other">SDK + API keys</span>
+                <span class="comparison-item-findbug">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+                  One gem
+                </span>
+              </div>
+            </div>
+            <div class="comparison-item">
+              <span class="comparison-item-label">Configuration</span>
+              <div class="comparison-item-values">
+                <span class="comparison-item-other">DSN, tokens</span>
+                <span class="comparison-item-findbug">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+                  Zero config
+                </span>
+              </div>
+            </div>
+            <div class="comparison-item">
+              <span class="comparison-item-label">Background jobs</span>
+              <div class="comparison-item-values">
+                <span class="comparison-item-other">Sidekiq required</span>
+                <span class="comparison-item-findbug">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+                  Built-in
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Reliability Card -->
+        <div class="comparison-card">
+          <div class="comparison-card-header">
+            <div class="comparison-icon purple">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+            </div>
+            <div>
+              <h3 class="comparison-card-title">Always Available</h3>
+              <p class="comparison-card-desc">No external dependencies. Works even when the internet doesn't.</p>
+            </div>
+          </div>
+          <div class="comparison-items">
+            <div class="comparison-item">
+              <span class="comparison-item-label">Network dependency</span>
+              <div class="comparison-item-values">
+                <span class="comparison-item-other">Required</span>
+                <span class="comparison-item-findbug">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+                  None
+                </span>
+              </div>
+            </div>
+            <div class="comparison-item">
+              <span class="comparison-item-label">Service outages</span>
+              <div class="comparison-item-values">
+                <span class="comparison-item-other">Data loss risk</span>
+                <span class="comparison-item-findbug">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+                  Impossible
+                </span>
+              </div>
+            </div>
+            <div class="comparison-item">
+              <span class="comparison-item-label">Capture latency</span>
+              <div class="comparison-item-values">
+                <span class="comparison-item-other">Network RTT</span>
+                <span class="comparison-item-findbug">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+                  ~1ms local
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Bottom Highlight -->
+        <div class="comparison-card full-width">
+          <div class="comparison-highlight">
+            <div class="comparison-highlight-item">
+              <div class="comparison-highlight-value">$0</div>
+              <div class="comparison-highlight-label">Monthly cost</div>
+            </div>
+            <div class="comparison-highlight-item">
+              <div class="comparison-highlight-value">~1ms</div>
+              <div class="comparison-highlight-label">Capture time</div>
+            </div>
+            <div class="comparison-highlight-item">
+              <div class="comparison-highlight-value">100%</div>
+              <div class="comparison-highlight-label">Data ownership</div>
+            </div>
+            <div class="comparison-highlight-item">
+              <div class="comparison-highlight-value">2 min</div>
+              <div class="comparison-highlight-label">Setup time</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Architecture Section -->
+  <section class="architecture" id="architecture">
+    <div class="container">
+      <div class="architecture-container">
+        <div class="section-header">
+          <h2>Built for performance</h2>
+          <p>FindBug is designed to never slow down your application.</p>
+        </div>
+
+        <div class="flow-diagram">
+          <!-- Row 1: Rails App -->
+          <div class="flow-row">
+            <div class="flow-node primary" style="min-width: 200px;">
+              <div class="flow-node-icon blue">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+              </div>
+              <div class="flow-node-title">Your Rails App</div>
+              <div class="flow-node-desc">Requests flow through normally</div>
+            </div>
+          </div>
+
+          <!-- Arrow Down -->
+          <div class="flow-arrow vertical">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+          </div>
+
+          <!-- Row 2: Split - Error & Performance Capture -->
+          <div class="flow-row split">
+            <div class="flow-side left">
+              <div class="flow-mini-node">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                Exception Middleware
+              </div>
+              <div class="flow-mini-node">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+                Performance Instrumentation
+              </div>
+            </div>
+
+            <div class="flow-center">
+              <div class="flow-node warning">
+                <div class="flow-node-icon orange">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></svg>
+                </div>
+                <div class="flow-node-title">Redis Buffer</div>
+                <div class="flow-node-desc">Async queue for events</div>
+                <div class="flow-node-badge">~1ms write</div>
+              </div>
+            </div>
+
+            <div class="flow-side right">
+              <div class="flow-mini-node">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+                Non-blocking
+              </div>
+              <div class="flow-mini-node">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                Circuit breaker
+              </div>
+            </div>
+          </div>
+
+          <!-- Arrow Down -->
+          <div class="flow-arrow vertical">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+          </div>
+
+          <!-- Row 3: Background Thread -->
+          <div class="flow-row">
+            <div class="flow-node highlight">
+              <div class="flow-node-icon purple">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+              </div>
+              <div class="flow-node-title">Background Thread</div>
+              <div class="flow-node-desc">Flushes every 30 seconds</div>
+              <div class="flow-node-badge">No Sidekiq needed</div>
+            </div>
+          </div>
+
+          <!-- Arrow Down -->
+          <div class="flow-arrow vertical">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+          </div>
+
+          <!-- Row 4: Database & Dashboard -->
+          <div class="flow-row" style="gap: 2rem;">
+            <div class="flow-node success">
+              <div class="flow-node-icon green">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></svg>
+              </div>
+              <div class="flow-node-title">Your Database</div>
+              <div class="flow-node-desc">PostgreSQL / MySQL</div>
+            </div>
+
+            <div class="flow-arrow">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+            </div>
+
+            <div class="flow-node success">
+              <div class="flow-node-icon green">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="21" x2="9" y2="9"/></svg>
+              </div>
+              <div class="flow-node-title">Dashboard</div>
+              <div class="flow-node-desc">/findbug</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Stats Grid -->
+        <div class="architecture-stats">
+          <div class="arch-stat">
+            <div class="arch-stat-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+            </div>
+            <div class="arch-stat-value">~1ms</div>
+            <div class="arch-stat-label">Capture time</div>
+          </div>
+          <div class="arch-stat">
+            <div class="arch-stat-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+            </div>
+            <div class="arch-stat-value">Zero</div>
+            <div class="arch-stat-label">Request blocking</div>
+          </div>
+          <div class="arch-stat">
+            <div class="arch-stat-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+            </div>
+            <div class="arch-stat-value">30s</div>
+            <div class="arch-stat-label">Flush interval</div>
+          </div>
+          <div class="arch-stat">
+            <div class="arch-stat-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+            </div>
+            <div class="arch-stat-value">Built-in</div>
+            <div class="arch-stat-label">Circuit breaker</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Demo Section -->
+  <section class="demo" id="demo">
+    <div class="container">
+      <div class="section-header">
+        <h2>See it in action</h2>
+        <p>A preview of what your FindBug dashboard looks like with real error data.</p>
+      </div>
+      <div class="demo-container">
+        <div class="demo-window">
+          <!-- Browser Title Bar -->
+          <div class="demo-titlebar">
+            <div class="dots">
+              <span class="dot red"></span>
+              <span class="dot yellow"></span>
+              <span class="dot green"></span>
+            </div>
+            <div class="url">localhost:3010/findbug</div>
+          </div>
+
+          <!-- App Header - Matches real Findbug layout -->
+          <div class="demo-app-header">
+            <div class="demo-app-logo">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M8 2l1.88 1.88"/><path d="M14.12 3.88L16 2"/><path d="M9 7.13v-1a3.003 3.003 0 1 1 6 0v1"/><path d="M12 20c-3.3 0-6-2.7-6-6v-3a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v3c0 3.3-2.7 6-6 6"/><path d="M12 20v-9"/><path d="M6.53 9C4.6 8.8 3 7.1 3 5"/><path d="M6 13H2"/><path d="M3 21c0-2.1 1.7-3.9 3.8-4"/><path d="M20.97 5c0 2.1-1.6 3.8-3.5 4"/><path d="M22 13h-4"/><path d="M17.2 17c2.1.1 3.8 1.9 3.8 4"/>
+              </svg>
+              <span>FindBug</span>
+            </div>
+            <nav class="demo-app-nav">
+              <a class="active">Dashboard</a>
+              <a>Errors</a>
+              <a>Performance</a>
+            </nav>
+            <div class="demo-header-right">
+              <div class="demo-health-indicator">
+                <span class="demo-health-dot"></span>
+                <span>Healthy</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Main Content - Dashboard View -->
+          <div class="demo-main">
+            <h1 class="demo-page-title">Dashboard</h1>
+            <p class="demo-page-description">Monitor errors and performance across your application.</p>
+
+            <!-- Stats Grid - Matches real dashboard exactly -->
+            <div class="demo-stats-grid">
+              <div class="demo-stat-card">
+                <div class="demo-stat-label">Unresolved Errors</div>
+                <div class="demo-stat-value error">12</div>
+                <div class="demo-stat-change">Total: 247</div>
+              </div>
+              <div class="demo-stat-card">
+                <div class="demo-stat-label">Errors (24h)</div>
+                <div class="demo-stat-value">38</div>
+                <div class="demo-stat-change">Last 7d: 156</div>
+              </div>
+              <div class="demo-stat-card">
+                <div class="demo-stat-label">Avg Response Time</div>
+                <div class="demo-stat-value">142<span class="unit">ms</span></div>
+                <div class="demo-stat-change">1,847 requests (24h)</div>
+              </div>
+              <div class="demo-stat-card">
+                <div class="demo-stat-label">N+1 Issues (24h)</div>
+                <div class="demo-stat-value warning">3</div>
+                <div class="demo-stat-change">Performance issues detected</div>
+              </div>
+            </div>
+
+            <!-- Two Column Grid -->
+            <div class="demo-grid-2">
+              <!-- Recent Errors Card -->
+              <div class="demo-card">
+                <div class="demo-card-header">
+                  <div>
+                    <h2 class="demo-card-title">Recent Errors</h2>
+                    <p class="demo-card-description">Unresolved errors from your application</p>
+                  </div>
+                  <button class="demo-btn-outline">View All</button>
+                </div>
+                <table class="demo-table">
+                  <thead>
+                    <tr>
+                      <th>Error</th>
+                      <th>Count</th>
+                      <th>Last Seen</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td>
+                        <a href="#" class="demo-font-mono" style="font-weight: 600;">Stripe::CardError</a><br>
+                        <span class="demo-text-muted demo-text-sm">Your card was declined</span>
+                      </td>
+                      <td><span class="demo-badge demo-badge-error">142</span></td>
+                      <td class="demo-text-muted demo-text-sm">2 minutes ago</td>
+                    </tr>
+                    <tr>
+                      <td>
+                        <a href="#" class="demo-font-mono" style="font-weight: 600;">ActiveRecord::RecordInvalid</a><br>
+                        <span class="demo-text-muted demo-text-sm">Validation failed: Email taken</span>
+                      </td>
+                      <td><span class="demo-badge demo-badge-error">89</span></td>
+                      <td class="demo-text-muted demo-text-sm">5 minutes ago</td>
+                    </tr>
+                    <tr>
+                      <td>
+                        <a href="#" class="demo-font-mono" style="font-weight: 600;">Net::ReadTimeout</a><br>
+                        <span class="demo-text-muted demo-text-sm">Request to api.example.com...</span>
+                      </td>
+                      <td><span class="demo-badge demo-badge-muted">8</span></td>
+                      <td class="demo-text-muted demo-text-sm">12 minutes ago</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+
+              <!-- Slowest Endpoints Card -->
+              <div class="demo-card">
+                <div class="demo-card-header">
+                  <div>
+                    <h2 class="demo-card-title">Slowest Endpoints</h2>
+                    <p class="demo-card-description">Performance data from the last 24 hours</p>
+                  </div>
+                  <button class="demo-btn-outline">View All</button>
+                </div>
+                <table class="demo-table">
+                  <thead>
+                    <tr>
+                      <th>Endpoint</th>
+                      <th>Avg</th>
+                      <th>Max</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td><a href="#" class="demo-font-mono demo-text-sm">OrdersController#create</a></td>
+                      <td><span class="demo-badge demo-badge-warning">847ms</span></td>
+                      <td class="demo-text-muted demo-text-sm">1,245ms</td>
+                    </tr>
+                    <tr>
+                      <td><a href="#" class="demo-font-mono demo-text-sm">ReportsController#index</a></td>
+                      <td><span class="demo-badge demo-badge-warning">623ms</span></td>
+                      <td class="demo-text-muted demo-text-sm">982ms</td>
+                    </tr>
+                    <tr>
+                      <td><a href="#" class="demo-font-mono demo-text-sm">UsersController#show</a></td>
+                      <td><span class="demo-badge demo-badge-muted">156ms</span></td>
+                      <td class="demo-text-muted demo-text-sm">298ms</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CTA Section -->
+  <section class="cta">
+    <div class="container">
+      <h2>Ready to own your error data?</h2>
+      <p>Start tracking errors in your Rails application today. No credit card, no sign-up required.</p>
+      <a href="https://github.com/ITSSOUMIT/findbug" target="_blank" class="btn btn-primary">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
+        Get Started on GitHub
+      </a>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer>
+    <div class="container">
+      <div class="footer-links">
+        <a href="https://github.com/ITSSOUMIT/findbug" target="_blank">GitHub</a>
+        <a href="https://rubygems.org/gems/findbug" target="_blank">RubyGems</a>
+        <a href="https://github.com/ITSSOUMIT/findbug/issues" target="_blank">Report Issue</a>
+        <a href="mailto:hey@soumit.in">Contact</a>
+      </div>
+      <p class="footer-copyright">
+        Built by <a href="https://www.linkedin.com/in/itssoumit" target="_blank">Soumit Das</a> · MIT License
+      </p>
+    </div>
+  </footer>
+</body>
+</html>
