@@ -1453,29 +1453,189 @@
     /* CTA Section */
     .cta {
       padding: 5rem 0;
+      background: hsl(0 0% 2%);
+    }
+
+    .cta-box {
+      display: grid;
+      grid-template-columns: 1fr 1.2fr;
+      border-radius: 1.5rem;
+      overflow: hidden;
+      border: 1px solid hsl(var(--border));
+    }
+
+    .cta-content {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      padding: 3rem;
+      position: relative;
+      z-index: 2;
+      background: linear-gradient(135deg,
+        hsl(145 70% 22%) 0%,
+        hsl(170 65% 30%) 50%,
+        hsl(195 75% 40%) 100%
+      );
+    }
+
+    .cta-content::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background:
+        radial-gradient(ellipse 80% 50% at 20% 40%, hsl(145 100% 45% / 0.3), transparent),
+        radial-gradient(ellipse 60% 80% at 80% 80%, hsl(195 100% 55% / 0.35), transparent),
+        radial-gradient(ellipse 50% 50% at 50% 20%, hsl(170 100% 45% / 0.2), transparent);
+      z-index: -1;
+    }
+
+    .cta-content h2 {
+      font-size: 2.25rem;
+      font-weight: 700;
+      letter-spacing: -0.025em;
+      margin-bottom: 1rem;
+      line-height: 1.2;
+      color: hsl(var(--foreground));
+    }
+
+    .cta-content p {
+      font-size: 1rem;
+      color: white;
+      margin-bottom: 1.5rem;
+      max-width: 320px;
+    }
+
+    .cta-preview {
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 2rem;
+      background: hsl(0 0% 2%);
+    }
+
+    .cta-preview-window {
+      width: 100%;
+      max-width: 400px;
+      background: hsl(var(--card));
+      border: 1px solid hsl(var(--border));
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+    }
+
+    .cta-preview-titlebar {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.75rem 1rem;
+      background: hsl(var(--secondary));
+      border-bottom: 1px solid hsl(var(--border));
+    }
+
+    .cta-preview-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: hsl(var(--muted-foreground) / 0.3);
+    }
+
+    .cta-preview-content {
+      padding: 1.25rem;
+    }
+
+    .cta-preview-header {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      margin-bottom: 1rem;
+    }
+
+    .cta-preview-logo {
+      width: 32px;
+      height: 32px;
+      background: hsl(var(--destructive) / 0.15);
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .cta-preview-logo svg {
+      width: 18px;
+      height: 18px;
+      color: hsl(var(--destructive));
+    }
+
+    .cta-preview-title {
+      font-weight: 600;
+      font-size: 0.9375rem;
+    }
+
+    .cta-preview-stats {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 0.75rem;
+      margin-bottom: 1rem;
+    }
+
+    .cta-stat-card {
+      background: hsl(var(--secondary));
+      border-radius: 8px;
+      padding: 0.75rem;
       text-align: center;
     }
 
-    .cta h2 {
-      font-size: 1.875rem;
+    .cta-stat-value {
+      font-size: 1.25rem;
       font-weight: 700;
-      letter-spacing: -0.025em;
-      margin-bottom: 0.75rem;
+      color: hsl(var(--foreground));
     }
 
-    .cta p {
-      font-size: 1rem;
+    .cta-stat-label {
+      font-size: 0.6875rem;
       color: hsl(var(--muted-foreground));
-      margin-bottom: 1.5rem;
-      max-width: 400px;
-      margin-left: auto;
-      margin-right: auto;
+    }
+
+    .cta-preview-chart {
+      height: 60px;
+      background: hsl(var(--secondary));
+      border-radius: 8px;
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-around;
+      padding: 0.75rem;
+      gap: 4px;
+    }
+
+    .cta-chart-bar {
+      width: 12px;
+      background: linear-gradient(to top, hsl(var(--success)), hsl(var(--success) / 0.5));
+      border-radius: 2px;
+    }
+
+    @media (max-width: 900px) {
+      .cta-box {
+        grid-template-columns: 1fr;
+      }
+      .cta-content {
+        padding: 2.5rem 1.5rem;
+        text-align: center;
+        align-items: center;
+      }
+      .cta-content h2 {
+        font-size: 1.75rem;
+      }
+      .cta-preview {
+        padding: 1.5rem;
+      }
     }
 
     /* Footer */
     footer {
       padding: 2rem 0;
       text-align: center;
+      background: hsl(0 0% 2%);
     }
 
     .footer-links {
@@ -2261,12 +2421,59 @@
   <!-- CTA Section -->
   <section class="cta">
     <div class="container">
-      <h2>Ready to own your error data?</h2>
-      <p>Start tracking errors in your Rails application today. No credit card, no sign-up required.</p>
-      <a href="https://github.com/ITSSOUMIT/findbug" target="_blank" class="btn btn-primary">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
-        Get Started on GitHub
-      </a>
+      <div class="cta-box">
+        <div class="cta-content">
+          <h2>Own Your<br>Error Data</h2>
+          <p>Open source, self-hosted, and forever free. Your errors, your infrastructure, your rules.</p>
+          <a href="https://github.com/ITSSOUMIT/findbug" target="_blank" class="btn btn-primary">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
+            Get Started
+          </a>
+        </div>
+        <div class="cta-preview">
+          <div class="cta-preview-window">
+            <div class="cta-preview-titlebar">
+              <span class="cta-preview-dot"></span>
+              <span class="cta-preview-dot"></span>
+              <span class="cta-preview-dot"></span>
+            </div>
+            <div class="cta-preview-content">
+              <div class="cta-preview-header">
+                <div class="cta-preview-logo">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+                </div>
+                <span class="cta-preview-title">FindBug Dashboard</span>
+              </div>
+              <div class="cta-preview-stats">
+                <div class="cta-stat-card">
+                  <div class="cta-stat-value">12</div>
+                  <div class="cta-stat-label">Errors</div>
+                </div>
+                <div class="cta-stat-card">
+                  <div class="cta-stat-value">847</div>
+                  <div class="cta-stat-label">Requests</div>
+                </div>
+                <div class="cta-stat-card">
+                  <div class="cta-stat-value">42ms</div>
+                  <div class="cta-stat-label">Avg Time</div>
+                </div>
+              </div>
+              <div class="cta-preview-chart">
+                <div class="cta-chart-bar" style="height: 25%;"></div>
+                <div class="cta-chart-bar" style="height: 45%;"></div>
+                <div class="cta-chart-bar" style="height: 30%;"></div>
+                <div class="cta-chart-bar" style="height: 60%;"></div>
+                <div class="cta-chart-bar" style="height: 80%;"></div>
+                <div class="cta-chart-bar" style="height: 55%;"></div>
+                <div class="cta-chart-bar" style="height: 70%;"></div>
+                <div class="cta-chart-bar" style="height: 90%;"></div>
+                <div class="cta-chart-bar" style="height: 65%;"></div>
+                <div class="cta-chart-bar" style="height: 40%;"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   </section>
 
@@ -2284,5 +2491,6 @@
       </p>
     </div>
   </footer>
+
 </body>
 </html>
