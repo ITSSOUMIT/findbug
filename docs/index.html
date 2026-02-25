@@ -961,6 +961,150 @@
       .demo-grid-2 { grid-template-columns: 1fr; }
     }
 
+    /* Demo Badge Info */
+    .demo-badge-info {
+      background-color: hsl(var(--info) / 0.15);
+      color: hsl(var(--info));
+    }
+
+    /* Demo Toggle */
+    .demo-toggle {
+      position: relative;
+      display: inline-block;
+      width: 2rem;
+      height: 1.125rem;
+    }
+    .demo-toggle input { display: none; }
+    .demo-toggle-slider {
+      position: absolute;
+      inset: 0;
+      border-radius: 9999px;
+      background-color: hsl(0 62.8% 30.6%);
+      transition: background-color 0.2s;
+    }
+    .demo-toggle-slider::before {
+      content: '';
+      position: absolute;
+      width: 0.875rem;
+      height: 0.875rem;
+      left: 0.125rem;
+      top: 50%;
+      transform: translateY(-50%);
+      border-radius: 50%;
+      background: white;
+      transition: transform 0.2s;
+    }
+    .demo-toggle input:checked + .demo-toggle-slider {
+      background-color: hsl(var(--success));
+    }
+    .demo-toggle input:checked + .demo-toggle-slider::before {
+      transform: translateY(-50%) translateX(0.875rem);
+    }
+
+    /* Demo Icon Button */
+    .demo-btn-icon {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 1.75rem;
+      height: 1.75rem;
+      border-radius: var(--radius);
+      color: hsl(var(--muted-foreground));
+      background: transparent;
+      border: none;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .demo-btn-icon:hover {
+      background-color: hsl(var(--muted));
+      color: hsl(var(--foreground));
+    }
+
+    /* Demo Tab Content */
+    .demo-tab-content { display: none; }
+    .demo-tab-content.active { display: block; }
+
+    /* Demo Filter Bar */
+    .demo-filter-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 0.75rem;
+      margin-bottom: 0.75rem;
+      flex-wrap: wrap;
+    }
+    .demo-filter-bar-filters {
+      display: flex;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+    }
+    .demo-select {
+      appearance: none;
+      background-color: hsl(var(--secondary));
+      color: hsl(var(--foreground));
+      border: 1px solid hsl(var(--border));
+      border-radius: var(--radius);
+      padding: 0.375rem 1.75rem 0.375rem 0.625rem;
+      font-size: 0.75rem;
+      cursor: pointer;
+      background-image: url("data:image/svg+xml,%3Csvg width='10' height='6' viewBox='0 0 10 6' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%23999' fill='none' stroke-width='1.5'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 0.5rem center;
+    }
+    .demo-search-input {
+      background-color: hsl(var(--secondary));
+      color: hsl(var(--foreground));
+      border: 1px solid hsl(var(--border));
+      border-radius: var(--radius);
+      padding: 0.375rem 0.625rem;
+      font-size: 0.75rem;
+      width: 160px;
+    }
+
+    /* Demo Chart */
+    .demo-chart-container {
+      display: flex;
+      align-items: flex-end;
+      gap: 3px;
+      height: 80px;
+      padding: 1rem 1.25rem 0.25rem;
+    }
+    .demo-chart-bar {
+      flex: 1;
+      background: hsl(var(--info) / 0.6);
+      border-radius: 2px 2px 0 0;
+      min-width: 4px;
+      transition: background 0.15s;
+    }
+    .demo-chart-bar:hover {
+      background: hsl(var(--info));
+    }
+    .demo-chart-labels {
+      display: flex;
+      justify-content: space-between;
+      padding: 0.375rem 1.25rem 0.75rem;
+      font-size: 0.625rem;
+      color: hsl(var(--muted-foreground));
+    }
+
+    /* Demo Action Buttons (Resolve/Ignore) */
+    .demo-btn-sm {
+      display: inline-flex;
+      align-items: center;
+      padding: 0.1875rem 0.5rem;
+      font-size: 0.6875rem;
+      font-weight: 500;
+      border-radius: var(--radius);
+      border: 1px solid hsl(var(--border));
+      background: transparent;
+      color: hsl(var(--foreground));
+      cursor: pointer;
+    }
+    .demo-btn-sm.ghost {
+      border-color: transparent;
+      color: hsl(var(--muted-foreground));
+    }
+
     @media (max-width: 640px) {
       .demo-stats-grid { grid-template-columns: 1fr; }
       .demo-app-nav { display: none; }
@@ -1717,7 +1861,7 @@
     <div class="container">
       <div class="hero-badge">
         <span>NEW</span>
-        v0.3.5 released with multi-tenant support
+        v0.4.0 released with configurable alerts
       </div>
       <h1>Catch bugs<br>before your users do</h1>
       <p>
@@ -1735,7 +1879,7 @@
       </div>
       <div class="hero-code">
         <span class="comment"># Add to your Gemfile:</span><br>
-        <span class="keyword">gem</span> <span class="string">"findbug", "~> 0.3.5"</span><br><br>
+        <span class="keyword">gem</span> <span class="string">"findbug", "~> 0.4.0"</span><br><br>
         <span class="comment"># Install and you're done!</span><br>
         $ rails generate findbug:install<br>
         $ rails db:migrate<br><br>
@@ -2286,9 +2430,10 @@
               <span>FindBug</span>
             </div>
             <nav class="demo-app-nav">
-              <a class="active">Dashboard</a>
-              <a>Errors</a>
-              <a>Performance</a>
+              <a class="active" onclick="switchDemoTab('dashboard', this)">Dashboard</a>
+              <a onclick="switchDemoTab('errors', this)">Errors</a>
+              <a onclick="switchDemoTab('performance', this)">Performance</a>
+              <a onclick="switchDemoTab('alerts', this)">Alerts</a>
             </nav>
             <div class="demo-header-right">
               <div class="demo-health-indicator">
@@ -2298,8 +2443,10 @@
             </div>
           </div>
 
-          <!-- Main Content - Dashboard View -->
+          <!-- Main Content -->
           <div class="demo-main">
+            <!-- Dashboard Tab -->
+            <div class="demo-tab-content active" id="demo-tab-dashboard">
             <h1 class="demo-page-title">Dashboard</h1>
             <p class="demo-page-description">Monitor errors and performance across your application.</p>
 
@@ -2412,6 +2559,422 @@
                 </table>
               </div>
             </div>
+            </div><!-- /demo-tab-dashboard -->
+
+            <!-- Errors Tab -->
+            <div class="demo-tab-content" id="demo-tab-errors">
+            <h1 class="demo-page-title">Errors</h1>
+            <p class="demo-page-description">Track and manage application errors.</p>
+
+            <!-- Filter Bar -->
+            <div class="demo-filter-bar">
+              <div class="demo-filter-bar-filters">
+                <select class="demo-select"><option>Unresolved</option><option>Resolved</option><option>Ignored</option><option>All Statuses</option></select>
+                <select class="demo-select"><option>All Severities</option><option>Error</option><option>Warning</option><option>Info</option></select>
+                <select class="demo-select"><option>All Time</option><option>Last Hour</option><option>Last 24 Hours</option><option>Last 7 Days</option></select>
+                <select class="demo-select"><option>Most Recent</option><option>Most Occurrences</option><option>Oldest</option></select>
+              </div>
+              <input type="text" class="demo-search-input" placeholder="Search errors...">
+            </div>
+
+            <p class="demo-text-muted demo-text-xs" style="margin-bottom: 0.75rem;">Showing 5 of 12 errors</p>
+
+            <!-- Errors Table -->
+            <div class="demo-card">
+              <table class="demo-table">
+                <thead>
+                  <tr>
+                    <th style="width: 45%;">Error</th>
+                    <th>Status</th>
+                    <th>Count</th>
+                    <th>Last Seen</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>
+                      <a href="#" class="demo-font-mono" style="font-weight: 600;">Stripe::CardError</a><br>
+                      <span class="demo-text-muted demo-text-sm">Your card was declined</span>
+                      <div style="margin-top: 0.25rem;">
+                        <span class="demo-badge demo-badge-error">error</span>
+                        <span class="demo-text-muted demo-text-xs" style="margin-left: 0.5rem;">production</span>
+                      </div>
+                    </td>
+                    <td><span class="demo-badge demo-badge-error">unresolved</span></td>
+                    <td><strong>142</strong></td>
+                    <td class="demo-text-muted demo-text-sm">2 minutes ago</td>
+                    <td>
+                      <button class="demo-btn-sm">Resolve</button>
+                      <button class="demo-btn-sm ghost">Ignore</button>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td>
+                      <a href="#" class="demo-font-mono" style="font-weight: 600;">ActiveRecord::RecordInvalid</a><br>
+                      <span class="demo-text-muted demo-text-sm">Validation failed: Email has already been taken</span>
+                      <div style="margin-top: 0.25rem;">
+                        <span class="demo-badge demo-badge-error">error</span>
+                        <span class="demo-text-muted demo-text-xs" style="margin-left: 0.5rem;">production</span>
+                      </div>
+                    </td>
+                    <td><span class="demo-badge demo-badge-error">unresolved</span></td>
+                    <td><strong>89</strong></td>
+                    <td class="demo-text-muted demo-text-sm">5 minutes ago</td>
+                    <td>
+                      <button class="demo-btn-sm">Resolve</button>
+                      <button class="demo-btn-sm ghost">Ignore</button>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td>
+                      <a href="#" class="demo-font-mono" style="font-weight: 600;">Net::ReadTimeout</a><br>
+                      <span class="demo-text-muted demo-text-sm">Request to api.example.com timed out</span>
+                      <div style="margin-top: 0.25rem;">
+                        <span class="demo-badge demo-badge-warning">warning</span>
+                        <span class="demo-text-muted demo-text-xs" style="margin-left: 0.5rem;">production</span>
+                      </div>
+                    </td>
+                    <td><span class="demo-badge demo-badge-error">unresolved</span></td>
+                    <td><strong>23</strong></td>
+                    <td class="demo-text-muted demo-text-sm">12 minutes ago</td>
+                    <td>
+                      <button class="demo-btn-sm">Resolve</button>
+                      <button class="demo-btn-sm ghost">Ignore</button>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td>
+                      <a href="#" class="demo-font-mono" style="font-weight: 600;">NoMethodError</a><br>
+                      <span class="demo-text-muted demo-text-sm">undefined method 'name' for nil</span>
+                      <div style="margin-top: 0.25rem;">
+                        <span class="demo-badge demo-badge-error">error</span>
+                        <span class="demo-text-muted demo-text-xs" style="margin-left: 0.5rem;">staging</span>
+                      </div>
+                    </td>
+                    <td><span class="demo-badge demo-badge-error">unresolved</span></td>
+                    <td><strong>8</strong></td>
+                    <td class="demo-text-muted demo-text-sm">34 minutes ago</td>
+                    <td>
+                      <button class="demo-btn-sm">Resolve</button>
+                      <button class="demo-btn-sm ghost">Ignore</button>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td>
+                      <a href="#" class="demo-font-mono" style="font-weight: 600;">ActionController::ParameterMissing</a><br>
+                      <span class="demo-text-muted demo-text-sm">param is missing or the value is empty: user</span>
+                      <div style="margin-top: 0.25rem;">
+                        <span class="demo-badge demo-badge-error">error</span>
+                        <span class="demo-text-muted demo-text-xs" style="margin-left: 0.5rem;">production</span>
+                      </div>
+                    </td>
+                    <td><span class="demo-badge demo-badge-error">unresolved</span></td>
+                    <td><strong>3</strong></td>
+                    <td class="demo-text-muted demo-text-sm">1 hour ago</td>
+                    <td>
+                      <button class="demo-btn-sm">Resolve</button>
+                      <button class="demo-btn-sm ghost">Ignore</button>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            </div><!-- /demo-tab-errors -->
+
+            <!-- Performance Tab -->
+            <div class="demo-tab-content" id="demo-tab-performance">
+            <h1 class="demo-page-title">Performance</h1>
+
+            <!-- Time filter -->
+            <div style="margin-bottom: 1.5rem;">
+              <select class="demo-select"><option>Last 24 Hours</option><option>Last Hour</option><option>Last 7 Days</option><option>Last 30 Days</option></select>
+            </div>
+
+            <!-- Stats Grid -->
+            <div class="demo-stats-grid">
+              <div class="demo-stat-card">
+                <div class="demo-stat-label">Total Requests</div>
+                <div class="demo-stat-value">1,847</div>
+              </div>
+              <div class="demo-stat-card">
+                <div class="demo-stat-label">Avg Duration</div>
+                <div class="demo-stat-value warning">142<span class="unit">ms</span></div>
+              </div>
+              <div class="demo-stat-card">
+                <div class="demo-stat-label">Max Duration</div>
+                <div class="demo-stat-value">1,245<span class="unit">ms</span></div>
+              </div>
+              <div class="demo-stat-card">
+                <div class="demo-stat-label">N+1 Rate</div>
+                <div class="demo-stat-value warning">12%</div>
+              </div>
+            </div>
+
+            <div class="demo-grid-2">
+              <!-- Slowest Endpoints -->
+              <div class="demo-card">
+                <div class="demo-card-header">
+                  <div><h2 class="demo-card-title">Slowest Endpoints</h2></div>
+                </div>
+                <table class="demo-table">
+                  <thead>
+                    <tr>
+                      <th>Endpoint</th>
+                      <th>Avg</th>
+                      <th>Max</th>
+                      <th>Count</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td><a href="#" class="demo-font-mono demo-text-sm">OrdersController#create</a></td>
+                      <td><span class="demo-badge demo-badge-warning">847ms</span></td>
+                      <td class="demo-text-muted demo-text-sm">1,245ms</td>
+                      <td>312</td>
+                    </tr>
+                    <tr>
+                      <td><a href="#" class="demo-font-mono demo-text-sm">ReportsController#index</a></td>
+                      <td><span class="demo-badge demo-badge-warning">623ms</span></td>
+                      <td class="demo-text-muted demo-text-sm">982ms</td>
+                      <td>156</td>
+                    </tr>
+                    <tr>
+                      <td><a href="#" class="demo-font-mono demo-text-sm">UsersController#show</a></td>
+                      <td><span class="demo-badge demo-badge-muted">156ms</span></td>
+                      <td class="demo-text-muted demo-text-sm">298ms</td>
+                      <td>847</td>
+                    </tr>
+                    <tr>
+                      <td><a href="#" class="demo-font-mono demo-text-sm">Api::V1::ProductsController#index</a></td>
+                      <td><span class="demo-badge demo-badge-muted">89ms</span></td>
+                      <td class="demo-text-muted demo-text-sm">201ms</td>
+                      <td>1,203</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+
+              <!-- N+1 Hotspots -->
+              <div class="demo-card">
+                <div class="demo-card-header">
+                  <div><h2 class="demo-card-title">N+1 Hotspots</h2></div>
+                </div>
+                <table class="demo-table">
+                  <thead>
+                    <tr>
+                      <th>Endpoint</th>
+                      <th>N+1 Count</th>
+                      <th>Avg Queries</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td><a href="#" class="demo-font-mono demo-text-sm">OrdersController#create</a></td>
+                      <td><span class="demo-badge demo-badge-warning">47</span></td>
+                      <td>18</td>
+                    </tr>
+                    <tr>
+                      <td><a href="#" class="demo-font-mono demo-text-sm">ReportsController#index</a></td>
+                      <td><span class="demo-badge demo-badge-warning">23</span></td>
+                      <td>12</td>
+                    </tr>
+                    <tr>
+                      <td><a href="#" class="demo-font-mono demo-text-sm">UsersController#show</a></td>
+                      <td><span class="demo-badge demo-badge-muted">5</span></td>
+                      <td>4</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <!-- Throughput Chart -->
+            <div class="demo-card">
+              <div class="demo-card-header">
+                <div>
+                  <h2 class="demo-card-title">Throughput Over Time</h2>
+                  <p class="demo-card-description">Requests per interval</p>
+                </div>
+              </div>
+              <div class="demo-chart-container">
+                <div class="demo-chart-bar" style="height: 25%;"></div>
+                <div class="demo-chart-bar" style="height: 18%;"></div>
+                <div class="demo-chart-bar" style="height: 30%;"></div>
+                <div class="demo-chart-bar" style="height: 45%;"></div>
+                <div class="demo-chart-bar" style="height: 38%;"></div>
+                <div class="demo-chart-bar" style="height: 52%;"></div>
+                <div class="demo-chart-bar" style="height: 68%;"></div>
+                <div class="demo-chart-bar" style="height: 85%;"></div>
+                <div class="demo-chart-bar" style="height: 100%;"></div>
+                <div class="demo-chart-bar" style="height: 92%;"></div>
+                <div class="demo-chart-bar" style="height: 78%;"></div>
+                <div class="demo-chart-bar" style="height: 65%;"></div>
+                <div class="demo-chart-bar" style="height: 55%;"></div>
+                <div class="demo-chart-bar" style="height: 48%;"></div>
+                <div class="demo-chart-bar" style="height: 60%;"></div>
+                <div class="demo-chart-bar" style="height: 72%;"></div>
+                <div class="demo-chart-bar" style="height: 80%;"></div>
+                <div class="demo-chart-bar" style="height: 75%;"></div>
+                <div class="demo-chart-bar" style="height: 58%;"></div>
+                <div class="demo-chart-bar" style="height: 42%;"></div>
+                <div class="demo-chart-bar" style="height: 35%;"></div>
+                <div class="demo-chart-bar" style="height: 28%;"></div>
+                <div class="demo-chart-bar" style="height: 22%;"></div>
+                <div class="demo-chart-bar" style="height: 15%;"></div>
+              </div>
+              <div class="demo-chart-labels">
+                <span>00:00</span>
+                <span>23:00</span>
+              </div>
+            </div>
+            </div><!-- /demo-tab-performance -->
+
+            <!-- Alerts Tab -->
+            <div class="demo-tab-content" id="demo-tab-alerts">
+            <h1 class="demo-page-title">Alerts</h1>
+            <p class="demo-page-description">Manage alert channels and send test notifications.</p>
+
+            <!-- Stats Grid -->
+            <div class="demo-stats-grid" style="grid-template-columns: repeat(3, 1fr);">
+              <div class="demo-stat-card">
+                <div class="demo-stat-label">Total Channels</div>
+                <div class="demo-stat-value" style="font-size: 1.5rem;">3</div>
+                <div class="demo-stat-change">2 enabled</div>
+              </div>
+              <div class="demo-stat-card">
+                <div class="demo-stat-label">Throttle Period</div>
+                <div class="demo-stat-value" style="font-size: 1.5rem;">300s</div>
+                <div class="demo-stat-change">5 minutes between alerts per error</div>
+              </div>
+              <div class="demo-stat-card">
+                <div class="demo-stat-label">Alert Status</div>
+                <div style="margin-top: 0.5rem;">
+                  <span class="demo-health-dot" style="display: inline-block; width: 0.5rem; height: 0.5rem; border-radius: 50; vertical-align: middle;"></span>
+                  <span class="demo-text-sm">Active</span>
+                </div>
+                <div class="demo-stat-change">Alerts will be sent when errors occur</div>
+              </div>
+            </div>
+
+            <!-- Add Channel Button -->
+            <div style="display: flex; justify-content: flex-end; margin-bottom: 1rem;">
+              <button class="demo-btn-outline" style="gap: 0.375rem; display: inline-flex; align-items: center;">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+                </svg>
+                Add Alert Channel
+              </button>
+            </div>
+
+            <!-- Channels Table -->
+            <div class="demo-card">
+              <table class="demo-table">
+                <thead>
+                  <tr>
+                    <th>Channel</th>
+                    <th>Config</th>
+                    <th style="text-align: center;">Status</th>
+                    <th style="text-align: right;">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>
+                      <strong>Production Slack</strong>
+                      <span class="demo-badge demo-badge-info" style="margin-left: 0.5rem;">Slack</span>
+                    </td>
+                    <td class="demo-text-muted demo-text-sm demo-font-mono">https://hooks.slack.com/service********</td>
+                    <td style="text-align: center;">
+                      <label class="demo-toggle">
+                        <input type="checkbox" checked>
+                        <span class="demo-toggle-slider"></span>
+                      </label>
+                    </td>
+                    <td>
+                      <div style="display: flex; gap: 0.25rem; justify-content: flex-end; align-items: center;">
+                        <button class="demo-btn-icon" title="Send test alert">
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M22 2 11 13"/><path d="m22 2-7 20-4-9-9-4 20-7z"/>
+                          </svg>
+                        </button>
+                        <button class="demo-btn-icon" title="Edit">
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/><path d="m15 5 4 4"/>
+                          </svg>
+                        </button>
+                        <button class="demo-btn-icon" title="Delete" style="color: hsl(var(--error) / 0.7);">
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/>
+                          </svg>
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td>
+                      <strong>Dev Team Email</strong>
+                      <span class="demo-badge demo-badge-info" style="margin-left: 0.5rem;">Email</span>
+                    </td>
+                    <td class="demo-text-muted demo-text-sm demo-font-mono">team@example.com, oncall@example.com</td>
+                    <td style="text-align: center;">
+                      <label class="demo-toggle">
+                        <input type="checkbox" checked>
+                        <span class="demo-toggle-slider"></span>
+                      </label>
+                    </td>
+                    <td>
+                      <div style="display: flex; gap: 0.25rem; justify-content: flex-end; align-items: center;">
+                        <button class="demo-btn-icon" title="Send test alert">
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M22 2 11 13"/><path d="m22 2-7 20-4-9-9-4 20-7z"/>
+                          </svg>
+                        </button>
+                        <button class="demo-btn-icon" title="Edit">
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/><path d="m15 5 4 4"/>
+                          </svg>
+                        </button>
+                        <button class="demo-btn-icon" title="Delete" style="color: hsl(var(--error) / 0.7);">
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/>
+                          </svg>
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td>
+                      <strong>Discord Staging</strong>
+                      <span class="demo-badge demo-badge-info" style="margin-left: 0.5rem;">Discord</span>
+                    </td>
+                    <td class="demo-text-muted demo-text-sm demo-font-mono">https://discord.com/api/web********</td>
+                    <td style="text-align: center;">
+                      <label class="demo-toggle">
+                        <input type="checkbox">
+                        <span class="demo-toggle-slider"></span>
+                      </label>
+                    </td>
+                    <td>
+                      <div style="display: flex; gap: 0.25rem; justify-content: flex-end; align-items: center;">
+                        <button class="demo-btn-icon" title="Edit">
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/><path d="m15 5 4 4"/>
+                          </svg>
+                        </button>
+                        <button class="demo-btn-icon" title="Delete" style="color: hsl(var(--error) / 0.7);">
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/>
+                          </svg>
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            </div><!-- /demo-tab-alerts -->
+
           </div>
         </div>
       </div>
@@ -2491,6 +3054,24 @@
       </p>
     </div>
   </footer>
+
+  <script>
+    function switchDemoTab(tab, navLink) {
+      // Update nav
+      document.querySelectorAll('.demo-app-nav a').forEach(function(a) { a.classList.remove('active'); });
+      navLink.classList.add('active');
+
+      // Update content
+      document.querySelectorAll('.demo-tab-content').forEach(function(el) { el.classList.remove('active'); });
+      var target = document.getElementById('demo-tab-' + tab);
+      if (target) target.classList.add('active');
+
+      // Update URL bar
+      var urls = { dashboard: 'localhost:3010/findbug', errors: 'localhost:3010/findbug/errors', performance: 'localhost:3010/findbug/performance', alerts: 'localhost:3010/findbug/alerts' };
+      var urlBar = document.querySelector('.demo-titlebar .url');
+      if (urlBar && urls[tab]) urlBar.textContent = urls[tab];
+    }
+  </script>
 
 </body>
 </html>
