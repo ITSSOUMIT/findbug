@@ -11,6 +11,7 @@ require_relative "../../app/controllers/findbug/application_controller"
 require_relative "../../app/controllers/findbug/dashboard_controller"
 require_relative "../../app/controllers/findbug/errors_controller"
 require_relative "../../app/controllers/findbug/performance_controller"
+require_relative "../../app/controllers/findbug/alerts_controller"
 
 module Findbug
   # Engine is the main Rails integration point for Findbug.
@@ -96,6 +97,14 @@ Findbug::Engine.routes.draw do
 
   # Performance
   resources :performance, only: [:index, :show]
+
+  # Alerts
+  resources :alerts, only: [:index, :new, :create, :edit, :update, :destroy] do
+    member do
+      post :toggle
+      post :test
+    end
+  end
 
   # Health check (useful for monitoring)
   get "health", to: "dashboard#health"

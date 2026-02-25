@@ -12,6 +12,12 @@ module Findbug
     # 3. Dispatcher checks throttling (avoid spam)
     # 4. Dispatcher sends to enabled channels (async via AlertJob)
     #
+    # CHANNEL SOURCE
+    # ==============
+    #
+    # Alert channels are stored in the database (findbug_alert_channels table)
+    # and managed via the dashboard UI at /findbug/alerts.
+    #
     # THROTTLING
     # ==========
     #
@@ -36,7 +42,7 @@ module Findbug
         #
         def notify(error_event, async: true)
           return unless Findbug.enabled?
-          return unless Findbug.config.alerts.any_enabled?
+          return unless any_enabled?
           return unless should_alert?(error_event)
           return if throttled?(error_event)
 
@@ -54,15 +60,21 @@ module Findbug
         # @param error_event [ErrorEvent] the error to alert about
         #
         def send_alerts(error_event)
-          alert_config = Findbug.config.alerts
-
-          alert_config.enabled_channels.each do |channel_name, config|
-            send_to_channel(channel_name, error_event, config)
+          Findbug::AlertChannel.enabled.find_each do |channel_record|
+            channel_instance = channel_record.channel_class.new(channel_record.config.symbolize_keys)
+            channel_instance.send_alert(error_event)
           rescue StandardError => e
             Findbug.logger.error(
-              "[Findbug] Failed to send alert to #{channel_name}: #{e.message}"
+              "[Findbug] Failed to send alert to #{channel_record.name}: #{e.message}"
             )
           end
+        end
+
+        # Check if any alert channels are enabled in the database
+        def any_enabled?
+          Findbug::AlertChannel.enabled.exists?
+        rescue StandardError
+          false
         end
 
         private
@@ -93,32 +105,6 @@ module Findbug
         # Record that we sent an alert (for throttling)
         def record_alert(error_event)
           Throttler.record(error_event.fingerprint)
-        end
-
-        # Send to a specific channel
-        def send_to_channel(channel_name, error_event, config)
-          channel_class = channel_for(channel_name)
-          return unless channel_class
-
-          channel = channel_class.new(config)
-          channel.send_alert(error_event)
-        end
-
-        # Get the channel class for a channel name
-        def channel_for(channel_name)
-          case channel_name.to_sym
-          when :email
-            Channels::Email
-          when :slack
-            Channels::Slack
-          when :discord
-            Channels::Discord
-          when :webhook
-            Channels::Webhook
-          else
-            Findbug.logger.warn("[Findbug] Unknown alert channel: #{channel_name}")
-            nil
-          end
         end
       end
     end

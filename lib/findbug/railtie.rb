@@ -60,6 +60,7 @@ module Findbug
       models_path = File.expand_path("../../app/models/findbug", __dir__)
       require "#{models_path}/error_event"
       require "#{models_path}/performance_event"
+      require "#{models_path}/alert_channel"
     end
 
     # Register our middleware to catch exceptions
@@ -84,6 +85,13 @@ module Findbug
       require_relative "capture/middleware"
 
       Rails.application.config.middleware.use(Findbug::Capture::Middleware)
+
+      # Ensure Rack::MethodOverride is available so the dashboard's HTML
+      # forms can use PATCH/DELETE via the _method hidden field.
+      # API-only Rails apps don't include this middleware by default.
+      if Rails.application.config.api_only
+        Rails.application.config.middleware.insert_before 0, Rack::MethodOverride
+      end
     end
 
     # Set up Rails error reporting integration (Rails 7+)

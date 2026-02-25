@@ -1,0 +1,154 @@
+<h1>New Alert Channel</h1>
+<p class="page-description">Configure a new alert channel to receive error notifications.</p>
+
+<div class="card" style="max-width: 560px;">
+  <div class="card-content">
+    <%= form_tag findbug.alerts_path, method: :post do %>
+      <div style="display: flex; flex-direction: column; gap: 1.5rem;">
+
+        <%# Channel Type %>
+        <div class="form-group">
+          <label>Channel Type</label>
+          <%= select_tag "alert_channel[channel_type]",
+              options_for_select([
+                ["Select a channel type...", ""],
+                ["Email", "email"],
+                ["Slack", "slack"],
+                ["Discord", "discord"],
+                ["Webhook", "webhook"]
+              ], @channel.channel_type),
+              id: "channel_type_select",
+              onchange: "toggleConfigFields(this.value)" %>
+        </div>
+
+        <%# Name %>
+        <div class="form-group">
+          <label>Name</label>
+          <input type="text" name="alert_channel[name]" value="<%= @channel.name %>"
+                 placeholder="e.g., Production Slack, Dev Team Email">
+        </div>
+
+        <%# Enabled %>
+        <label style="display: flex; align-items: center; gap: 0.75rem; cursor: pointer;">
+          <input type="hidden" name="alert_channel[enabled]" value="0">
+          <span class="toggle">
+            <input type="checkbox" name="alert_channel[enabled]" value="1" <%= "checked" if @channel.enabled? %>>
+            <span class="toggle-slider"></span>
+          </span>
+          <span>Enable this channel</span>
+        </label>
+
+        <div class="separator"></div>
+
+        <%# Email config fields %>
+        <div id="config_email" class="channel-config" style="display: none;">
+          <h3 style="font-size: 0.875rem; font-weight: 600; margin-bottom: 1.25rem; color: hsl(var(--muted-foreground));">Email Configuration</h3>
+          <div style="display: flex; flex-direction: column; gap: 1.25rem;">
+            <div class="form-group">
+              <label>Recipients</label>
+              <textarea name="config[recipients]" rows="3" placeholder="One email per line&#10;team@example.com&#10;oncall@example.com" class="font-mono"><%= Array(@channel.config["recipients"]).join("\n") %></textarea>
+              <span class="form-hint">One email address per line</span>
+            </div>
+            <div class="form-group">
+              <label>From Address</label>
+              <input type="text" name="config[from]" value="<%= @channel.config["from"] %>" placeholder="findbug@example.com">
+              <span class="form-hint">Optional. Defaults to findbug@localhost</span>
+            </div>
+          </div>
+        </div>
+
+        <%# Slack config fields %>
+        <div id="config_slack" class="channel-config" style="display: none;">
+          <h3 style="font-size: 0.875rem; font-weight: 600; margin-bottom: 1.25rem; color: hsl(var(--muted-foreground));">Slack Configuration</h3>
+          <div style="display: flex; flex-direction: column; gap: 1.25rem;">
+            <div class="form-group">
+              <label>Webhook URL</label>
+              <input type="text" name="config[webhook_url]" value="<%= @channel.config["webhook_url"] %>" placeholder="https://hooks.slack.com/services/..." class="font-mono">
+            </div>
+            <div class="form-group">
+              <label>Channel</label>
+              <input type="text" name="config[channel]" value="<%= @channel.config["channel"] %>" placeholder="#errors">
+              <span class="form-hint">Optional. Overrides the webhook's default channel</span>
+            </div>
+            <div class="form-group">
+              <label>Username</label>
+              <input type="text" name="config[username]" value="<%= @channel.config["username"] %>" placeholder="Findbug">
+              <span class="form-hint">Optional. Defaults to Findbug</span>
+            </div>
+            <div class="form-group">
+              <label>Icon Emoji</label>
+              <input type="text" name="config[icon_emoji]" value="<%= @channel.config["icon_emoji"] %>" placeholder=":bug:">
+              <span class="form-hint">Optional. Defaults to :bug:</span>
+            </div>
+          </div>
+        </div>
+
+        <%# Discord config fields %>
+        <div id="config_discord" class="channel-config" style="display: none;">
+          <h3 style="font-size: 0.875rem; font-weight: 600; margin-bottom: 1.25rem; color: hsl(var(--muted-foreground));">Discord Configuration</h3>
+          <div style="display: flex; flex-direction: column; gap: 1.25rem;">
+            <div class="form-group">
+              <label>Webhook URL</label>
+              <input type="text" name="config[webhook_url]" value="<%= @channel.config["webhook_url"] %>" placeholder="https://discord.com/api/webhooks/..." class="font-mono">
+            </div>
+            <div class="form-group">
+              <label>Username</label>
+              <input type="text" name="config[username]" value="<%= @channel.config["username"] %>" placeholder="Findbug">
+              <span class="form-hint">Optional. Defaults to Findbug</span>
+            </div>
+            <div class="form-group">
+              <label>Avatar URL</label>
+              <input type="text" name="config[avatar_url]" value="<%= @channel.config["avatar_url"] %>" placeholder="https://example.com/avatar.png">
+              <span class="form-hint">Optional. URL to a custom avatar image</span>
+            </div>
+          </div>
+        </div>
+
+        <%# Webhook config fields %>
+        <div id="config_webhook" class="channel-config" style="display: none;">
+          <h3 style="font-size: 0.875rem; font-weight: 600; margin-bottom: 1.25rem; color: hsl(var(--muted-foreground));">Webhook Configuration</h3>
+          <div style="display: flex; flex-direction: column; gap: 1.25rem;">
+            <div class="form-group">
+              <label>URL</label>
+              <input type="text" name="config[url]" value="<%= @channel.config["url"] %>" placeholder="https://your-service.com/findbug-webhook" class="font-mono">
+            </div>
+            <div class="form-group">
+              <label>HTTP Method</label>
+              <%= select_tag "config[method]",
+                  options_for_select([["POST", "POST"], ["PUT", "PUT"]], @channel.config["method"] || "POST") %>
+            </div>
+            <div class="form-group">
+              <label>Custom Headers</label>
+              <textarea name="config[headers]" rows="3" placeholder="Authorization: Bearer your-token&#10;X-Custom-Header: value" class="font-mono"><%= (@channel.config["headers"] || {}).map { |k, v| "#{k}: #{v}" }.join("\n") %></textarea>
+              <span class="form-hint">One header per line in "Key: Value" format</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="separator"></div>
+
+        <%# Actions %>
+        <div style="display: flex; gap: 0.75rem;">
+          <button type="submit" class="btn btn-primary">Create Channel</button>
+          <a href="<%= findbug.alerts_path %>" class="btn btn-ghost">Cancel</a>
+        </div>
+      </div>
+    <% end %>
+  </div>
+</div>
+
+<script>
+  function toggleConfigFields(channelType) {
+    document.querySelectorAll('.channel-config').forEach(function(el) {
+      el.style.display = 'none';
+    });
+    if (channelType) {
+      var section = document.getElementById('config_' + channelType);
+      if (section) section.style.display = 'block';
+    }
+  }
+  (function() {
+    var select = document.getElementById('channel_type_select');
+    if (select && select.value) toggleConfigFields(select.value);
+  })();
+</script>

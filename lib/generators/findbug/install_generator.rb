@@ -49,8 +49,14 @@ module Findbug
           "db/migrate/create_findbug_performance_events.rb"
         )
 
+        migration_template(
+          "create_findbug_alert_channels.rb",
+          "db/migrate/create_findbug_alert_channels.rb"
+        )
+
         say_status :create, "db/migrate/create_findbug_error_events.rb", :green
         say_status :create, "db/migrate/create_findbug_performance_events.rb", :green
+        say_status :create, "db/migrate/create_findbug_alert_channels.rb", :green
       end
 
       def display_post_install

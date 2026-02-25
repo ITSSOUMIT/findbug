@@ -113,35 +113,12 @@ Findbug.configure do |config|
   # ALERTS
   # ============================================================================
 
+  # Alert channels (Email, Slack, Discord, Webhook) are configured via the
+  # dashboard UI at /findbug/alerts — no code changes needed.
+
   config.alerts do |alerts|
     # Throttle period - don't alert for same error more than once in this period
     alerts.throttle_period = 5.minutes
-
-    # Email alerts
-    # alerts.email(
-    #   enabled: true,
-    #   recipients: ["dev-team@example.com"]
-    # )
-
-    # Slack alerts
-    # alerts.slack(
-    #   enabled: true,
-    #   webhook_url: ENV["SLACK_WEBHOOK_URL"],
-    #   channel: "#errors"  # optional
-    # )
-
-    # Discord alerts
-    # alerts.discord(
-    #   enabled: true,
-    #   webhook_url: ENV["DISCORD_WEBHOOK_URL"]
-    # )
-
-    # Generic webhook
-    # alerts.webhook(
-    #   enabled: true,
-    #   url: "https://your-service.com/findbug-webhook",
-    #   headers: { "Authorization" => "Bearer #{ENV['WEBHOOK_TOKEN']}" }
-    # )
   end
 
   # ============================================================================

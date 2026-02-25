@@ -310,70 +310,31 @@ module Findbug
 
   # Nested class for alert configuration
   #
-  # WHY A SEPARATE CLASS?
-  # Alerts have their own sub-configuration (multiple channels, each with settings).
-  # Nesting keeps the main Configuration cleaner.
+  # ALERT CHANNELS ARE DB-DRIVEN
+  # ============================
+  #
+  # Alert channels (email, Slack, Discord, webhook) are stored in the database
+  # and managed via the dashboard UI at /findbug/alerts.
+  #
+  # This class only holds global alert settings like throttle_period.
   #
   class AlertConfiguration
     attr_accessor :throttle_period
 
     def initialize
-      @channels = {}
       @throttle_period = 300 # 5 minutes default
     end
 
-    # Configure email alerts
-    def email(enabled:, recipients: [], **options)
-      @channels[:email] = {
-        enabled: enabled,
-        recipients: Array(recipients),
-        **options
-      }
-    end
-
-    # Configure Slack alerts
-    def slack(enabled:, webhook_url: nil, channel: nil, **options)
-      @channels[:slack] = {
-        enabled: enabled,
-        webhook_url: webhook_url,
-        channel: channel,
-        **options
-      }
-    end
-
-    # Configure Discord alerts
-    def discord(enabled:, webhook_url: nil, **options)
-      @channels[:discord] = {
-        enabled: enabled,
-        webhook_url: webhook_url,
-        **options
-      }
-    end
-
-    # Configure generic webhook alerts
-    def webhook(enabled:, url: nil, headers: {}, **options)
-      @channels[:webhook] = {
-        enabled: enabled,
-        url: url,
-        headers: headers,
-        **options
-      }
-    end
-
-    # Get configuration for a specific channel
-    def channel(name)
-      @channels[name.to_sym]
-    end
-
-    # Get all enabled channels
-    def enabled_channels
-      @channels.select { |_, config| config[:enabled] }
-    end
-
-    # Check if any alerts are configured
-    def any_enabled?
-      enabled_channels.any?
-    end
+    # Deprecated DSL methods — kept for backward compatibility so existing
+    # initializers don't raise NoMethodError on upgrade. These are no-ops;
+    # alert channels are now configured via the dashboard UI.
+    def email(**) = nil
+    def slack(**) = nil
+    def discord(**) = nil
+    def webhook(**) = nil
+    def channel(_name) = nil
+    def enabled_channels = {}
+    def any_enabled? = false
   end
 
   # Custom error for configuration issues

@@ -292,7 +292,61 @@
       transition: border-color 0.15s;
     }
 
-    select:focus, input:focus { outline: none; border-color: hsl(var(--ring)); box-shadow: 0 0 0 2px hsl(var(--ring) / 0.2); }
+    textarea {
+      padding: 0.5rem 0.75rem;
+      font-size: 0.875rem;
+      background-color: hsl(var(--background));
+      border: 1px solid hsl(var(--input));
+      border-radius: var(--radius);
+      color: hsl(var(--foreground));
+      transition: border-color 0.15s;
+      resize: vertical;
+      line-height: 1.5;
+    }
+
+    input[type="checkbox"] {
+      width: 1rem;
+      height: 1rem;
+      accent-color: hsl(var(--primary));
+      cursor: pointer;
+    }
+
+    /* Toggle switch */
+    .toggle { position: relative; display: inline-block; width: 2rem; height: 1.125rem; flex-shrink: 0; }
+    .toggle input { opacity: 0; width: 0; height: 0; position: absolute; }
+    .toggle-slider {
+      position: absolute; cursor: pointer; inset: 0;
+      background-color: hsl(var(--error) / 0.5);
+      border-radius: 1rem;
+      transition: background-color 0.2s;
+    }
+    .toggle-slider::before {
+      content: "";
+      position: absolute; left: 2px; top: 50%; transform: translateY(-50%);
+      width: 0.875rem; height: 0.875rem;
+      background-color: hsl(var(--foreground));
+      border-radius: 50%;
+      transition: transform 0.2s;
+    }
+    .toggle input:checked + .toggle-slider { background-color: hsl(var(--success)); }
+    .toggle input:checked + .toggle-slider::before { transform: translateY(-50%) translateX(0.875rem); }
+    .toggle input:focus-visible + .toggle-slider { box-shadow: 0 0 0 2px hsl(var(--ring) / 0.3); }
+
+    /* Icon button */
+    .btn-icon {
+      display: inline-flex; align-items: center; justify-content: center;
+      width: 1.75rem; height: 1.75rem; padding: 0; border: none; border-radius: var(--radius);
+      background: transparent; color: hsl(var(--muted-foreground)); cursor: pointer;
+      transition: background-color 0.15s, color 0.15s;
+    }
+    .btn-icon:hover { background-color: hsl(var(--muted)); color: hsl(var(--foreground)); }
+    .btn-icon.destructive:hover { color: hsl(var(--error)); }
+
+    select:focus, input:focus, textarea:focus { outline: none; border-color: hsl(var(--ring)); box-shadow: 0 0 0 2px hsl(var(--ring) / 0.2); }
+
+    .form-group { display: flex; flex-direction: column; gap: 0.375rem; }
+    .form-group label { font-size: 0.875rem; font-weight: 500; color: hsl(var(--foreground)); }
+    .form-hint { font-size: 0.75rem; color: hsl(var(--muted-foreground)); }
 
     select {
       cursor: pointer;
@@ -566,6 +620,7 @@
         <a href="<%= findbug.root_path %>" class="<%= 'active' if controller_name == 'dashboard' %>">Dashboard</a>
         <a href="<%= findbug.errors_path %>" class="<%= 'active' if controller_name == 'errors' %>">Errors</a>
         <a href="<%= findbug.performance_index_path %>" class="<%= 'active' if controller_name == 'performance' %>">Performance</a>
+        <a href="<%= findbug.alerts_path %>" class="<%= 'active' if controller_name == 'alerts' %>">Alerts</a>
       </nav>
       <div class="header-right">
         <div class="health-indicator">

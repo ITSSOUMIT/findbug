@@ -29,18 +29,15 @@ Next steps:
      FINDBUG_USERNAME=your-username
      FINDBUG_PASSWORD=your-secure-password
 
-4. (Optional) Configure alerts in config/initializers/findbug.rb:
+4. (Optional) Configure alerts via the dashboard:
 
-     config.alerts do |alerts|
-       alerts.slack(
-         enabled: true,
-         webhook_url: ENV["SLACK_WEBHOOK_URL"]
-       )
-     end
+     http://localhost:3000/findbug/alerts
+
+   Add Email, Slack, Discord, or Webhook channels directly from the UI.
 
 5. (Multi-tenant apps) If using Apartment/ros-apartment, add to apartment.rb:
 
-     config.excluded_models = %w[Findbug::ErrorEvent Findbug::PerformanceEvent]
+     config.excluded_models = %w[Findbug::ErrorEvent Findbug::PerformanceEvent Findbug::AlertChannel]
 
    And exclude /findbug from your tenant switching middleware.
 

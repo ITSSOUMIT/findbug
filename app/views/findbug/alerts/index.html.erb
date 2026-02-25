@@ -1,0 +1,127 @@
+<h1>Alerts</h1>
+<p class="page-description">Manage alert channels and send test notifications.</p>
+
+<%# Summary stats %>
+<div class="stats-grid" style="grid-template-columns: repeat(3, 1fr);">
+  <div class="stat-card">
+    <div class="stat-label">Total Channels</div>
+    <div class="stat-value" style="font-size: 1.5rem;"><%= @channels.size %></div>
+    <div class="stat-change"><%= @enabled_count %> enabled</div>
+  </div>
+
+  <div class="stat-card">
+    <div class="stat-label">Throttle Period</div>
+    <div class="stat-value" style="font-size: 1.5rem;"><%= Findbug.config.alerts.throttle_period %>s</div>
+    <div class="stat-change"><%= Findbug.config.alerts.throttle_period / 60 %> minutes between alerts per error</div>
+  </div>
+
+  <div class="stat-card">
+    <div class="stat-label">Alert Status</div>
+    <div style="margin-top: 0.5rem;">
+      <% if @enabled_count > 0 %>
+        <span class="status-dot success"></span>
+        <span class="text-sm">Active</span>
+      <% else %>
+        <span class="status-dot error"></span>
+        <span class="text-sm">No channels enabled</span>
+      <% end %>
+    </div>
+    <div class="stat-change">
+      <% if @enabled_count > 0 %>
+        Alerts will be sent when errors occur
+      <% else %>
+        Configure a channel below to start receiving alerts
+      <% end %>
+    </div>
+  </div>
+</div>
+
+<%# Add channel button %>
+<div style="display: flex; justify-content: flex-end; margin-bottom: 1rem;">
+  <a href="<%= findbug.new_alert_path %>" class="btn btn-primary btn-sm">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 0.375rem;">
+      <line x1="12" y1="5" x2="12" y2="19"/>
+      <line x1="5" y1="12" x2="19" y2="12"/>
+    </svg>
+    Add Alert Channel
+  </a>
+</div>
+
+<%# Channel list %>
+<% if @channels.any? %>
+  <div class="card">
+    <table class="table">
+      <thead>
+        <tr>
+          <th>Channel</th>
+          <th>Config</th>
+          <th style="text-align: center;">Status</th>
+          <th style="text-align: right;">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% @channels.each do |channel| %>
+          <tr>
+            <td>
+              <strong><%= channel.name %></strong>
+              <span class="badge badge-info" style="margin-left: 0.5rem;"><%= channel.display_type %></span>
+            </td>
+            <td class="text-muted text-sm font-mono">
+              <% masked = channel.masked_config %>
+              <%= masked.values.first if masked.any? %>
+            </td>
+            <td style="text-align: center;">
+              <%= form_tag findbug.toggle_alert_path(channel), method: :post, style: "display: inline;" do %>
+                <label class="toggle" title="<%= channel.enabled? ? 'Disable' : 'Enable' %>">
+                  <input type="checkbox" onchange="this.form.submit()" <%= "checked" if channel.enabled? %>>
+                  <span class="toggle-slider"></span>
+                </label>
+              <% end %>
+            </td>
+            <td>
+              <div style="display: flex; gap: 0.25rem; justify-content: flex-end; align-items: center;">
+                <%# Test %>
+                <% if channel.enabled? %>
+                  <%= button_to findbug.test_alert_path(channel), method: :post, class: "btn-icon", title: "Send test alert" do %>
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M22 2 11 13"/><path d="m22 2-7 20-4-9-9-4 20-7z"/>
+                    </svg>
+                  <% end %>
+                <% end %>
+                <%# Edit %>
+                <a href="<%= findbug.edit_alert_path(channel) %>" class="btn-icon" title="Edit">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/>
+                    <path d="m15 5 4 4"/>
+                  </svg>
+                </a>
+                <%# Delete %>
+                <%= button_to findbug.alert_path(channel), method: :delete, class: "btn-icon destructive", title: "Delete" do %>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/>
+                    <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/>
+                  </svg>
+                <% end %>
+              </div>
+            </td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  </div>
+<% else %>
+  <div class="card">
+    <div class="empty-state">
+      <div class="empty-state-icon">
+        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+          <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+        </svg>
+      </div>
+      <p>No alert channels configured yet.</p>
+      <p style="margin-top: 0.75rem;">
+        <a href="<%= findbug.new_alert_path %>" class="btn btn-primary btn-sm">Add your first channel</a>
+      </p>
+    </div>
+  </div>
+<% end %>

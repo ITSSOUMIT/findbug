@@ -142,34 +142,11 @@ Findbug.configure do |config|
   # ===================
   # Alerts (Optional)
   # ===================
+  # Alert channels (Email, Slack, Discord, Webhook) are configured via the
+  # dashboard UI at /findbug/alerts — no code changes needed.
+
   config.alerts do |alerts|
     alerts.throttle_period = 5.minutes
-
-    # Slack
-    # alerts.slack(
-    #   enabled: true,
-    #   webhook_url: ENV["SLACK_WEBHOOK_URL"],
-    #   channel: "#errors"
-    # )
-
-    # Email
-    # alerts.email(
-    #   enabled: true,
-    #   recipients: ["team@example.com"]
-    # )
-
-    # Discord
-    # alerts.discord(
-    #   enabled: true,
-    #   webhook_url: ENV["DISCORD_WEBHOOK_URL"]
-    # )
-
-    # Custom Webhook
-    # alerts.webhook(
-    #   enabled: true,
-    #   url: "https://your-service.com/webhook",
-    #   headers: { "Authorization" => "Bearer token" }
-    # )
   end
 end
 ```
@@ -311,6 +288,7 @@ Apartment.configure do |config|
     # Your existing excluded models...
     Findbug::ErrorEvent
     Findbug::PerformanceEvent
+    Findbug::AlertChannel
   ]
 end
 ```
