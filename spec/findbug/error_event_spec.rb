@@ -168,6 +168,25 @@ RSpec.describe Findbug::ErrorEvent do
       expect(err.context).to include("user_id" => 1, "plan" => "pro")
     end
 
+    it "deep-merges the context extra accross occurrences" do
+      err = described_class.upsert_from_event(
+        event_data.merge(context: { user_id: 1, extra: { foo: "bar" } })
+      )
+
+      expect(err.reload.context).to include("user_id" => 1, "extra" => { "foo" => "bar" })
+
+      new_extra = {
+        foo: "baz",
+        qux: true
+      }
+
+      described_class.upsert_from_event(
+        event_data.merge(context: { extra: new_extra })
+      )
+
+      expect(err.reload.context).to include("user_id" => 1, "extra" => new_extra.stringify_keys)
+    end
+
     it "serialises backtraces stored as arrays into JSON" do
       data = event_data.merge(backtrace: ["file:1", "file:2"])
       err = described_class.upsert_from_event(data)

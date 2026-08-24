@@ -213,7 +213,7 @@ module Findbug
       return old_context if new_context.blank?
 
       # Deep merge, preferring new values
-      old_context.deep_merge(new_context)
+      old_context.deep_merge(new_context.deep_stringify_keys)
     end
 
     def self.serialize_backtrace(backtrace)
